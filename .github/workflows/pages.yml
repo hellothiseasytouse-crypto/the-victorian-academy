@@ -1,5 +1,4 @@
 name: Deploy The Victorian Academy to GitHub Pages
-# A fresh run creates one unambiguous Pages artifact for deployment.
 
 on:
   push:
@@ -16,16 +15,16 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  validate-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    name: Validate and upload game
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+
       - name: Check JavaScript syntax
         run: node --check game.js
+
       - name: Verify game files
         run: |
           test -s index.html
@@ -33,14 +32,25 @@ jobs:
           test -s game.js
           grep -q 'src="game.js"' index.html
           grep -q 'href="styles.css"' index.html
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:
           enablement: true
+
       - name: Upload static game
         uses: actions/upload-pages-artifact@v5
         with:
           path: .
-      - name: Deploy
+
+  deploy:
+    name: Publish game site
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
