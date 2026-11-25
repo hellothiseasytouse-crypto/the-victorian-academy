@@ -1,4 +1,5 @@
 name: Deploy The Victorian Academy to GitHub Pages
+# A fresh run creates one unambiguous Pages artifact for deployment.
 
 on:
   push:
