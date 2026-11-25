@@ -277,7 +277,7 @@ async function askNoxenStudio(text,personId){
     askNoxenStudio(value,personId);
   }
     function reactToFreeText(text,alreadyLogged=false){
-    const t=text.trim();if(!t||!activePerson)return;if(t.length>240)return;if(!alreadyLogged)say(t,"You");changeTime(3);
+    const t=text.trim();if(!t||!activePerson)return;if(t.length>240)return;if(!alreadyLogged){say(t,"You");changeTime(3);}
     const low=t.toLowerCase(),id=activePerson,p=people[id];let reply="";
     if(/phone|smartphone|computer|laptop|internet|wifi|wi-fi|google|ai\b|robot|electric|electricity|satellite|car\b|engine|camera|app\b/.test(low)){reply=modernReply(id,t);adjust(id,{fear:8,curiosity:14});remember(id,"You spoke of a strange modern invention.");}
     else if(/bro|bruh|lol|lmao|no cap|cooked|ate|slay|rizz|fr|ngl|idk/.test(low)){reply="Good heavens! What peculiar cant is this? Speak plainly, traveller; I cannot make sense of half these clipped expressions.";adjust(id,{anger:4,curiosity:5});}
