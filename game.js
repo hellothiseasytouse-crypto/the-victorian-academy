@@ -554,7 +554,7 @@ function politicsMetrics(){
         <div class="council-signers">${signers}</div>
         <p class="council-note">People sign only when they have a reason to risk being seen against the steward. Meet them first, hear their concerns and bring something they can stand behind.</p>
         <div class="council-action-grid">
-          ${action("ask_steward","Question Steward Alwyn","Ask him to explain the shortages and the handling of village levies.",state.location==="keep"&&at("alwyn")&&!p.inquiryOpened,"The steward is at the keep during office hours")}
+          ${action("ask_steward","Question Steward Alwyn","Ask him to explain the shortages and the handling of village levies.",state.location==="keep"&&at("alwyn")&&!p.inquiryOpened&&!p.stewardQuestioned,p.stewardQuestioned?"You have already heard his answer":"The steward is at the keep during office hours")}
           ${action("call_assembly","Call a village assembly","Invite residents to meet peacefully and discuss council oversight of the crown.",state.location==="market"&&at("margaret")&&grievanceCount>=2&&signatureCount>=3&&!p.assemblyCalled,"Requires two grievances and three petition signatures")}
           ${action("request_audience","Request an audience","Hobb can issue a pass once a credible petition reaches the gate.",state.location==="gate"&&at("hobb")&&grievanceCount>=2&&evidenceCount>=2&&signatureCount>=3&&!state.flags.keepUnlocked,"Bring two grievances, two pieces of testimony and three signatures to Hobb")}
           ${action("present_petition","Present the petition to King Aldric","Ask the crown to open the storehouse accounts and hear the villagers.",state.location==="keep"&&kingReady&&petitionReady&&!p.inquiryOpened,"Bring three signatures, two grievances and two pieces of testimony to the keep")}
@@ -606,7 +606,7 @@ function politicsMetrics(){
       addPoliticalEvidence("infirmary-rations","Edmund's delivery notes","The infirmary's dated notes record fewer supplies delivered than the number listed on its royal allotment.","Edmund Blackthorn");
       remember("edmund","You compared his delivery notes with the royal allotment. He confirmed that fewer supplies arrived than promised.");
       addEvent("The infirmary's delivery notes have raised further questions about the royal stores.");time(10);
-    }else if(action==="ask_steward"&&state.location==="keep"&&activeAt("alwyn")&&!p.inquiryOpened){
+    }else if(action==="ask_steward"&&state.location==="keep"&&activeAt("alwyn")&&!p.inquiryOpened&&!p.stewardQuestioned){
       p.stewardQuestioned=true;p.kingResponse="Alwyn insists the reserve is accounted for and says the public figures are incomplete. He refuses to discuss private stores without a royal order.";
       remember("alwyn","You asked about the grain shortages. He said the reserve is accounted for and refused to discuss the private store without royal authority.");
       addEvent("Steward Alwyn has denied wrongdoing and asked for a royal order before showing the reserve accounts.");time(8);
