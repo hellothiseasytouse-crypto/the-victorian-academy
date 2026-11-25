@@ -41,7 +41,7 @@
   };
   function defaultState(){
     const npc={}; for(const p of Object.values(people)) npc[p.id]={met:false,meetings:0,firstMetDay:0,lastMetDay:0,lastMetMinute:null,lastMetPlace:"",emotions:{...p.emotions},memories:[],opinion:"Unknown"};
-    return {version:1,started:false,role:"traveller",roleName:"Wayfarer",location:"market",day:1,minute:555,chapter:"The Stranger",reputation:"Unknown",inventory:[{id:"travel-cloak",name:"Weatherworn cloak",icon:"🧥",desc:"A sturdy cloak, damp from the road."}],quests:{bell:0,ledger:-1,parcel:-1,will:-1},flags:{sawFibres:false,herbs:false,linen:false,willFound:false,keepUnlocked:false,ending:""},npc,events:["The market is waking beneath a veil of mist.","A bell was heard after midnight, though the abbey says its clapper is removed."],timeline:[],dialogueLog:{},lastSaved:0};
+    return {version:1,started:false,role:"traveller",roleName:"Wayfarer",location:"market",day:1,minute:555,chapter:"The Stranger",reputation:"Unknown",inventory:[{id:"travel-cloak",name:"Weatherworn cloak",icon:"🧥",desc:"A sturdy cloak, damp from the road."}],quests:{bell:0,ledger:-1,parcel:-1,will:-1},flags:{sawFibres:false,herbs:false,linen:false,willFound:false,keepUnlocked:false,ending:""},politics:{grievances:[],evidence:[],signatures:[],inquiryOpened:false,stewardQuestioned:false,kingConfronted:false,petitionStarted:false,audiencePass:false,stewardRemoved:false,outcome:"",kingResponse:"",assemblyCalled:false},npc,events:["The market is waking beneath a veil of mist.","A bell was heard after midnight, though the abbey says its clapper is removed."],timeline:[],dialogueLog:{},lastSaved:0};
   }
   let state=defaultState(), selectedRole="traveller", activePerson=null, activeTab="world";
   let toastTimer=null, activeRequestController=null, pendingDialogueLine=null;
@@ -54,7 +54,7 @@
     catch(e){$("#save-indicator").textContent="Save unavailable";toast("Browser storage is unavailable. Export a save as backup.");}
   }
   function load(){
-    try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return false;const saved=JSON.parse(raw);if(!saved||saved.version!==1)return false;state={...defaultState(),...saved,npc:{...defaultState().npc,...saved.npc}};Object.keys(state.npc).forEach(id=>{state.npc[id]={...defaultState().npc[id],...state.npc[id],emotions:{...defaultState().npc[id].emotions,...(state.npc[id].emotions||{})}};});return !!state.started;}catch(e){return false;}
+    try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return false;const saved=JSON.parse(raw);if(!saved||saved.version!==1)return false;state={...defaultState(),...saved,politics:{...defaultState().politics,...(saved.politics||{})},npc:{...defaultState().npc,...saved.npc}};state.politics.grievances=Array.isArray(state.politics.grievances)?state.politics.grievances:[];state.politics.evidence=Array.isArray(state.politics.evidence)?state.politics.evidence:[];state.politics.signatures=Array.isArray(state.politics.signatures)?state.politics.signatures:[];Object.keys(state.npc).forEach(id=>{state.npc[id]={...defaultState().npc[id],...state.npc[id],emotions:{...defaultState().npc[id].emotions,...(state.npc[id].emotions||{})}};});return !!state.started;}catch(e){return false;}
   }
   function addTimeline(text){state.timeline.unshift({day:state.day,time:timeLabel(),text});state.timeline=state.timeline.slice(0,12);save();}
   function addEvent(text){state.events.unshift(text);state.events=state.events.slice(0,5);save();}
@@ -242,7 +242,7 @@ function renderGuide(){
     $("#clock-label").textContent="Day "+roman(state.day)+" · "+timeLabel();$("#header-date").textContent="THE YEAR OF OUR LORD 1348";$("#weather-label").textContent=weatherForToday().label;$("#role-label").textContent=state.roleName;$("#rep-value").textContent=state.reputation;$("#chapter-label").textContent="Chapter I · "+state.chapter;$("#standing-title").textContent=state.reputation;$("#standing-desc").textContent=state.reputation==="Unknown"?"No one knows your name.":"Your name is beginning to travel.";
     renderScene();renderPlaces();renderPeople();renderEvents();
     const q=activeQuest();$("#active-quest-card").innerHTML=`<div class="quest-kicker">${q.meta}</div><div class="quest-name">${q.name}</div><div class="quest-summary">${q.desc}</div><div class="quest-progress"><span style="width:${q.progress}%"></span></div><div class="quest-meta">${q.progress}% · JOURNEY RECORDED</div>`;
-    $("#journal-count").textContent=Object.values(state.quests).filter(v=>v>=0).length;$("#inventory-count").textContent=state.inventory.length;
+    $("#journal-count").textContent=Object.values(state.quests).filter(v=>v>=0).length;$("#inventory-count").textContent=state.inventory.length;const councilCount=$("#council-count");if(councilCount)councilCount.textContent=String(state.politics.grievances.length+state.politics.signatures.length);
     if(state.started&&$("#start-overlay")){$("#start-overlay").classList.add("hidden");}
   }
   function travelDuration(from,to){
@@ -378,6 +378,7 @@ function renderGuide(){
       "MANNER: "+(profile.manner||"Speak plainly and consistently with your character.")+" Current worry: "+(profile.concern||"Their own ordinary concerns.")+" Knowledge: "+(profile.knowledge||"Only what this person could reasonably know."),
       "RIGHT NOW: "+context.activity+". The place is "+context.place+". It is "+context.dayPart+" at "+context.time+". Weather: "+context.weather+". Surroundings: "+context.localScene,
       "PLAYER: "+state.roleName+". Social position: "+(roles[state.role]?.station||state.roleName)+". Let their position affect relevant forms of address and expectations, but do not assume their gender, personality or ability.",
+      "PUBLIC AFFAIRS: "+publicPoliticalClimate()+". Treat rumour as rumour. Do not know private evidence unless this character personally learned it.",
       "RELATIONSHIP: "+context.relationship+". They have met the player "+context.meetings+" time(s); "+context.daysSinceLastMeeting+" day(s) have passed since the previous meeting. Memories: "+memory,
       "QUEST CONTEXT: "+q.name+" — "+q.desc+". Current recorded facts: bell stage "+state.quests.bell+", ledger stage "+state.quests.ledger+", parcel stage "+state.quests.parcel+", missing courier stage "+state.quests.will+". Never invent a completed task, clue, promise or event.",
       "STYLE: Use clear, natural, spoken English that is easy to understand. The setting is medieval, but do not imitate Shakespeare. Do not use 'thou', 'thee', 'thy', fake archaic grammar or constant grand speeches. A little period-appropriate vocabulary is fine when natural.",
@@ -467,7 +468,8 @@ function renderGuide(){
       {name:"The Bell at Dusk",desc:"Investigate the strange ringing heard after midnight. Compare the accounts of Edmund, Rowan, and Margaret before visiting the abbey tower.",status:state.quests.bell===4?"Resolved":state.quests.bell>0?"In progress":"Undiscovered",objective:state.quests.bell===4?"Resolved: "+state.flags.ending:state.quests.bell===3?"Examine the tower and speak with Anselm.":"Speak with the physician and the villagers."},
       {name:"A Physician's Ledger",desc:"Gather rosemary and clean linen for Edmund at the infirmary.",status:state.quests.ledger===2?"Completed":state.quests.ledger>=0?"In progress":"Undiscovered",objective:state.quests.ledger===2?"Supplies delivered.":"Gather both items at the market and return to Edmund."},
       {name:"A Merchant's Promise",desc:"Carry Margaret's sealed parcel to Rowan at the Fox & Lantern.",status:state.quests.parcel===1?"Completed":state.quests.parcel===0?"In progress":"Undiscovered",objective:state.quests.parcel===1?"Parcel delivered.":"Speak with Margaret, then visit Rowan."},
-      {name:"The Missing Courier",desc:"Help Mara find her cousin Will, last seen on the northern road.",status:state.quests.will===2?"Clue found":state.quests.will>=0?"In progress":"Undiscovered",objective:state.quests.will===2?"Mara recognised the satchel strap.":"Ask Mara and search the roadside at the gate."}
+      {name:"The Missing Courier",desc:"Help Mara find her cousin Will, last seen on the northern road.",status:state.quests.will===2?"Clue found":state.quests.will>=0?"In progress":"Undiscovered",objective:state.quests.will===2?"Mara recognised the satchel strap.":"Ask Mara and search the roadside at the gate."},
+      {name:"The Weight of the Crown",desc:"Hear the village's complaints, collect records and signatures, request an audience and decide whether the crown should reform, share power or step aside.",status:state.politics.outcome?"Resolved":state.politics.inquiryOpened?"Royal inquiry":state.politics.grievances.length?"In progress":"Undiscovered",objective:state.politics.outcome?state.politics.outcome:state.politics.inquiryOpened?"Examine the second account book and confront the king.":"Listen to residents and build a credible petition."}
     ];
     openModal("Journal & quests",entries.map(q=>`<article class="journal-quest"><div class="quest-kicker">${q.status.toUpperCase()}</div><h3>${q.name}</h3><p>${q.desc}</p><div class="objective">CURRENT THREAD · ${q.objective}</div></article>`).join("")+`<h3 style="font:600 22px Georgia;margin:18px 0 8px">Chronicle of events</h3>`+state.timeline.map(e=>`<div class="timeline-entry" style="margin:8px 0"><span class="timeline-pin"></span><div class="timeline-copy" style="color:#594b34"><strong>Day ${roman(e.day)} · ${e.time}</strong>${escapeHtml(e.text)}</div></div>`).join(""),"JOURNAL & CHRONICLES");
   }
@@ -476,6 +478,172 @@ function renderGuide(){
     openModal("People of Ashenford",`<div class="journal-grid">${cards}</div>`,"THE SETTLEMENT");
   }
   function openInventory(){openModal("Your satchel",`<div class="inventory-grid">${state.inventory.map(i=>`<div class="inventory-item"><span>${i.icon}</span><strong>${escapeHtml(i.name)}</strong><small>${escapeHtml(i.desc)}</small></div>`).join("")||"<p>Your satchel is empty.</p>"}</div>`,"BELONGINGS & FINDS");}
+function politicsMetrics(){
+    const p=state.politics;
+    const commonSupport=clamp(18+p.grievances.length*7+p.evidence.length*5+p.signatures.length*6+(p.assemblyCalled?8:0));
+    const crownSupport=clamp(78-commonSupport*.58+(p.outcome==="reform"?8:0));
+    const stewardInfluence=clamp(68-p.evidence.length*11-(p.inquiryOpened?12:0)-(p.stewardRemoved?45:0));
+    return {commonSupport,crownSupport,stewardInfluence};
+  }
+  function hasPoliticalEvidence(id){return state.politics.evidence.some(item=>item.id===id);}
+  function addPoliticalGrievance(id,title,detail,source){
+    const p=state.politics;if(p.grievances.some(item=>item.id===id))return false;
+    p.grievances.push({id,title,detail,source,day:state.day});addTimeline("A village grievance was recorded: "+title+".");return true;
+  }
+  function addPoliticalEvidence(id,title,detail,source){
+    const p=state.politics;if(p.evidence.some(item=>item.id===id))return false;
+    p.evidence.push({id,title,detail,source,day:state.day});addTimeline("A piece of testimony was added to the village record: "+title+".");return true;
+  }
+  function publicPoliticalClimate(){
+    const p=state.politics;
+    if(p.outcome==="abdication")return "The crown has passed to a temporary council by public agreement. People are watching whether it can govern fairly.";
+    if(p.outcome==="regency")return "A temporary village council now shares authority with the crown. The settlement is waiting to see whether reform will last.";
+    if(p.outcome==="reform")return "The steward has been removed pending judgment, and the storehouse accounts are being opened to public review.";
+    if(p.inquiryOpened)return "The king has ordered an inquiry into complaints about grain levies and the royal storehouse. Rumours are spreading, but the facts remain disputed.";
+    if(p.signatures.length>=3)return "A Common Petition is gathering names. Some residents want a public hearing and elected oversight; others fear disorder.";
+    if(p.grievances.length)return "Several residents have complained about grain levies, shortages and the way the steward's household keeps accounts. These are complaints, not yet proven facts.";
+    return "People grumble about prices, levies and the cost of keeping the king's household. No public petition has yet been organised.";
+  }
+  function signatureReason(id){
+    const p=state.politics;
+    if(p.signatures.includes(id))return "Already signed";
+    if(id==="aldric"||id==="alwyn")return "Cannot sign this petition";
+    if(!ps(id).met)return "Meet them first";
+    if(!activeAt(id))return "Find them at "+places[routineFor(id).place].short;
+    if(ps(id).emotions.fear>=65||ps(id).emotions.anger>=65)return "They are unwilling to support you";
+    const ready={
+      margaret:hasPoliticalEvidence("market-ledger"),
+      rowan:hasPoliticalEvidence("tavern-witness"),
+      mara:p.grievances.length>=1,
+      edmund:hasPoliticalEvidence("infirmary-rations")||state.quests.ledger===2,
+      anselm:state.quests.bell===4&&ps(id).emotions.trust>=24,
+      hobb:p.inquiryOpened&&p.evidence.length>=3
+    }[id]||false;
+    return ready?"Ask for their signature":"They need a clearer reason to risk signing";
+  }
+  function renderCouncil(){
+    const p=state.politics,m=politicsMetrics();
+    const evidence=p.evidence.map(item=>`<article class="council-record"><span class="council-record-mark">✦</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p><small>From ${escapeHtml(item.source)} · Day ${roman(item.day)}</small></div></article>`).join("");
+    const grievances=p.grievances.map(item=>`<article class="council-record grievance-record"><span class="council-record-mark">✉</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p><small>Raised by ${escapeHtml(item.source)} · Day ${roman(item.day)}</small></div></article>`).join("");
+    const signers=Object.values(people).filter(person=>!["alwyn","aldric"].includes(person.id)).map(person=>{
+      const reason=signatureReason(person.id),signed=p.signatures.includes(person.id),ready=reason==="Ask for their signature";
+      return `<div class="council-signer"><div class="council-signer-icon">${person.icon}</div><div class="council-signer-copy"><strong>${person.name}</strong><small>${signed?"Name recorded":escapeHtml(reason)}</small></div><button class="council-sign-button" data-council-sign="${person.id}" ${(!ready||signed)?"disabled":""}>${signed?"Signed":ready?"Ask":"—"}</button></div>`;
+    }).join("");
+    const at=(id)=>state.location===routineFor(id).place&&activeAt(id);
+    const action=(id,title,desc,ready,locked)=>`<button class="council-action" data-council-action="${id}" ${ready?"":"disabled"}><strong>${title}</strong><span>${desc}</span><small>${ready?"Available here":locked}</small></button>`;
+    const evidenceCount=p.evidence.length,grievanceCount=p.grievances.length,signatureCount=p.signatures.length;
+    const petitionReady=grievanceCount>=2&&evidenceCount>=2&&signatureCount>=3;
+    const auditReady=p.inquiryOpened&&at("alwyn")&&!p.stewardRemoved&&!hasPoliticalEvidence("royal-audit");
+    const kingReady=at("aldric");
+    const finalReady=p.kingConfronted&&kingReady&&!p.outcome;
+    const result=p.outcome==="abdication"?"Aldric has formally stepped aside. A temporary council chosen by the village and household will govern while a lawful succession is settled.":p.outcome==="regency"?"The king has accepted a temporary council with authority over stores, levies and public accounts. The crown remains, but it no longer governs alone.":p.outcome==="reform"?"Alwyn has been removed from office pending judgment. The grain accounts are public, and the crown has ordered restitution to affected households.":"";
+    const status=p.outcome?"Political settlement reached":p.inquiryOpened?"Royal inquiry ordered":signatureCount>=3?"A public petition is taking shape":grievanceCount?"Grievances have been heard":"No formal complaint has reached the keep";
+    $("#modal-content").innerHTML=`
+      <section class="council-intro"><div class="quest-kicker">ASHENFORD · THE YEAR OF OUR LORD 1348</div><h3>The weight of the crown</h3><p>Grain is short, levies are unpopular, and the king's steward controls the storehouse accounts. Listen to residents, compare testimony, gather signatures and take a case to the keep. A rumour is not proof; the court will ask for records.</p><div class="council-status">${status}</div></section>
+      <section class="council-meters"><div class="council-meter"><div><span>COMMON PETITION</span><b>${m.commonSupport}%</b></div><i><em style="width:${m.commonSupport}%"></em></i></div><div class="council-meter"><div><span>CROWN'S STANDING</span><b>${m.crownSupport}%</b></div><i><em style="width:${m.crownSupport}%"></em></i></div><div class="council-meter"><div><span>STEWARD'S INFLUENCE</span><b>${m.stewardInfluence}%</b></div><i><em style="width:${m.stewardInfluence}%"></em></i></div></section>
+      ${result?`<section class="council-settlement"><span>✦ THE SETTLEMENT</span><p>${result}</p></section>`:""}
+      <section class="council-section"><div class="council-section-heading"><div><span>01 · LISTEN</span><h3>Hear the complaints</h3></div><small>Speak to people where they work</small></div><div class="council-action-grid">
+        ${action("market_records","Compare the market tallies","Margaret has kept her own figures for grain bought and levies paid.",state.location==="market"&&at("margaret")&&!hasPoliticalEvidence("market-ledger"),"Go to the Market Cross while Margaret is at her stall")}
+        ${action("mara_grievance","Hear Mara's complaint","She says several households have received less grain than they were promised.",state.location===routineFor("mara").place&&at("mara")&&!p.grievances.some(x=>x.id==="ration-complaint"),"Find Mara at the North Gate or Market Cross")}
+        ${action("rowan_witness","Ask Rowan about the carts","He may remember what was moved through the yard after the market closed.",state.location==="tavern"&&at("rowan")&&!hasPoliticalEvidence("tavern-witness"),"Visit the Fox & Lantern while Rowan is working")}
+        ${action("gate_register","Review the gate register","Hobb can compare official wagon entries with what passed through the gate.",state.location==="gate"&&at("hobb")&&!hasPoliticalEvidence("gate-register"),"Visit the North Gate while Hobb is on duty")}
+        ${action("infirmary_rations","Ask about infirmary supplies","Edmund can say whether the public stores have delivered what the infirmary was promised.",state.location==="infirmary"&&at("edmund")&&!hasPoliticalEvidence("infirmary-rations"),"Visit St. Brigid's while Edmund is working")}
+      </div></section>
+      <section class="council-section"><div class="council-section-heading"><div><span>02 · BUILD A CASE</span><h3>Petitioners and witnesses</h3></div><small>${signatureCount} of 6 names</small></div>
+        <div class="council-signers">${signers}</div>
+        <p class="council-note">People sign only when they have a reason to risk being seen against the steward. Meet them first, hear their concerns and bring something they can stand behind.</p>
+        <div class="council-action-grid">
+          ${action("ask_steward","Question Steward Alwyn","Ask him to explain the shortages and the handling of village levies.",state.location==="keep"&&at("alwyn")&&!p.inquiryOpened,"The steward is at the keep during office hours")}
+          ${action("request_audience","Request an audience","Hobb can issue a pass once a credible petition reaches the gate.",state.location==="gate"&&at("hobb")&&grievanceCount>=2&&evidenceCount>=2&&signatureCount>=3&&!state.flags.keepUnlocked,"Bring two grievances, two pieces of testimony and three signatures to Hobb")}
+          ${action("present_petition","Present the petition to King Aldric","Ask the crown to open the storehouse accounts and hear the villagers.",state.location==="keep"&&kingReady&&petitionReady&&!p.inquiryOpened,"Bring three signatures, two grievances and two pieces of testimony to the keep")}
+        </div>
+      </section>
+      <section class="council-section"><div class="council-section-heading"><div><span>03 · THE INQUIRY</span><h3>Records of the crown</h3></div><small>${p.inquiryOpened?"Inquiry open":"Not yet ordered"}</small></div>
+        <div class="council-action-grid">
+          ${action("audit_records","Examine the second account book","Under the king's warrant, compare the steward's reserve ledger with the public store record.",auditReady,"The king must first order an inquiry; Alwyn must be in his office")}
+          ${action("confront_king","Bring the audit to the king","Ask Aldric why his seal appears on a reserve order tied to missing relief grain.",state.location==="keep"&&kingReady&&hasPoliticalEvidence("royal-audit")&&!p.kingConfronted,"Complete the royal audit and speak with Aldric")}
+        </div>
+      </section>
+      <section class="council-section"><div class="council-section-heading"><div><span>04 · WHAT SHOULD CHANGE?</span><h3>Decisions before the crown</h3></div><small>Peaceful political outcomes</small></div>
+        <div class="council-action-grid">
+          ${action("restore_order","Demand restitution and reform","Remove Alwyn from office, return the diverted grain and open the accounts to public review.",finalReady,"Bring the audit to Aldric first")}
+          ${action("demand_regency","Demand a village council","A lawful regency would share authority with the crown and oversee stores, taxes and appointments.",finalReady&&signatureCount>=5&&evidenceCount>=3&&m.commonSupport>=65,"Requires five signatures, three records and broad support")}
+          ${action("demand_abdication","Call for the king to step aside","Ask Aldric to abdicate by public agreement and let a temporary council govern during a lawful succession.",finalReady&&signatureCount>=6&&evidenceCount>=4&&m.commonSupport>=82,"Requires all six signatures, four records and overwhelming public support")}
+        </div>
+      </section>
+      <section class="council-section"><div class="council-section-heading"><div><span>THE RECORD</span><h3>Complaints received</h3></div><small>${grievanceCount} recorded</small></div>${grievances||'<p class="council-empty">No complaints have been formally recorded. Start by listening to people in the village.</p>'}</section>
+      <section class="council-section"><div class="council-section-heading"><div><span>THE EVIDENCE</span><h3>Testimony and documents</h3></div><small>${evidenceCount} collected</small></div>${evidence||'<p class="council-empty">No supporting testimony has been collected yet.</p>'}</section>
+      <section class="council-section"><div class="council-section-heading"><div><span>PUBLIC WORD</span><h3>What people are saying</h3></div></div><p class="council-note">${escapeHtml(publicPoliticalClimate())}</p>${p.kingResponse?`<blockquote class="council-king-response">${escapeHtml(p.kingResponse)}</blockquote>`:""}</section>
+    `;
+  }
+  function openCouncil(){openModal("Town & Crown","","VILLAGE AFFAIRS");renderCouncil();}
+  function councilAction(action){
+    const p=state.politics;
+    const time=(minutes)=>{changeTime(minutes);render();};
+    if(action==="market_records"&&state.location==="market"&&activeAt("margaret")){
+      addPoliticalGrievance("grain-levy","Grain levies and short stores","Margaret's customers have paid the levy, yet the public store tally appears lower than the amount collected.","Margaret Whitmore");
+      addPoliticalEvidence("market-ledger","Margaret's market tally","Her private sales and levy notes do not match the public count of grain received by the storehouse. It is a discrepancy, not proof of where the grain went.","Margaret Whitmore");
+      remember("margaret","You compared her market tally with the public store count; she kept a record of the discrepancy.");
+      addEvent("A discrepancy between market tallies and the storehouse account is being discussed.");time(10);
+    }else if(action==="mara_grievance"&&activeAt("mara")){
+      addPoliticalGrievance("ration-complaint","Reduced household rations","Mara says several working households received less grain than the steward's notice promised.","Mara Fenwick");
+      remember("mara","You listened to her complaint that household grain rations were smaller than promised.");
+      addEvent("Mara has spoken openly about reduced grain rations.");time(8);
+    }else if(action==="rowan_witness"&&state.location==="tavern"&&activeAt("rowan")){
+      addPoliticalGrievance("late-haulage","Unpaid cart work","Rowan says two carters were promised payment for moving grain, but neither has been paid in full.","Rowan Pike");
+      addPoliticalEvidence("tavern-witness","Rowan's account of the late carts","Rowan recalls carts bearing the steward's mark arriving after the market closed. He heard the carters complain that their payment was short.","Rowan Pike");
+      remember("rowan","You asked about the grain carts. He remembers the steward's mark and the carters' unpaid wages.");
+      addEvent("Talk of late grain carts and unpaid carters has reached the tavern.");time(10);
+    }else if(action==="gate_register"&&state.location==="gate"&&activeAt("hobb")){
+      addPoliticalGrievance("gate-discrepancy","Unclear storehouse deliveries","The gate register records more grain wagons leaving under storehouse orders than the public account acknowledges.","Serjeant Hobb");
+      addPoliticalEvidence("gate-register","The gate register","Hobb's official entries show several storehouse wagons whose destinations were entered differently from the deliveries listed in the public account.","Serjeant Hobb");
+      remember("hobb","You compared the gate register with the public store entries. Hobb confirmed that several destinations were recorded inconsistently.");
+      addEvent("Serjeant Hobb has confirmed discrepancies in the gate register.");time(12);
+    }else if(action==="infirmary_rations"&&state.location==="infirmary"&&activeAt("edmund")){
+      addPoliticalGrievance("infirmary-shortage","The infirmary's missing supplies","Edmund says the infirmary received fewer sacks and linen bundles than the crown's delivery notice promised.","Edmund Blackthorn");
+      addPoliticalEvidence("infirmary-rations","Edmund's delivery notes","The infirmary's dated notes record fewer supplies delivered than the number listed on its royal allotment.","Edmund Blackthorn");
+      remember("edmund","You compared his delivery notes with the royal allotment. He confirmed that fewer supplies arrived than promised.");
+      addEvent("The infirmary's delivery notes have raised further questions about the royal stores.");time(10);
+    }else if(action==="ask_steward"&&state.location==="keep"&&activeAt("alwyn")&&!p.inquiryOpened){
+      p.stewardQuestioned=true;p.kingResponse="Alwyn insists the reserve is accounted for and says the public figures are incomplete. He refuses to discuss private stores without a royal order.";
+      remember("alwyn","You asked about the grain shortages. He said the reserve is accounted for and refused to discuss the private store without royal authority.");
+      addEvent("Steward Alwyn has denied wrongdoing and asked for a royal order before showing the reserve accounts.");time(8);
+    }else if(action==="request_audience"&&state.location==="gate"&&activeAt("hobb")&&p.grievances.length>=2&&p.evidence.length>=2&&p.signatures.length>=3&&!state.flags.keepUnlocked){
+      state.flags.keepUnlocked=true;p.audiencePass=true;
+      addEvent("Serjeant Hobb has issued a formal pass for a petition to be presented at the keep.");addTimeline("Hobb granted you an audience pass after reviewing the petition's supporting names and records.");time(6);toast("Hobb has granted you access to the keep.");
+    }else if(action==="present_petition"&&state.location==="keep"&&activeAt("aldric")&&p.grievances.length>=2&&p.evidence.length>=2&&p.signatures.length>=3&&!p.inquiryOpened){
+      p.inquiryOpened=true;p.petitionStarted=true;p.kingResponse="Aldric has ordered the storehouse accounts examined. He warns that accusations against a royal officer must be supported by records.";
+      remember("aldric","You presented a petition with testimony about the grain levies. He ordered an inquiry into the storehouse accounts.");
+      addEvent("King Aldric has ordered a formal inquiry into the grain accounts.");addTimeline("The Common Petition was presented to King Aldric; a royal inquiry was ordered.");time(10);
+    }else if(action==="audit_records"&&state.location==="keep"&&activeAt("alwyn")&&p.inquiryOpened&&!p.stewardRemoved&&!hasPoliticalEvidence("royal-audit")){
+      addPoliticalEvidence("royal-audit","The second storehouse ledger","The audit finds that Alwyn diverted part of the relief grain into a private reserve and altered the public tally. A separate order bears the king's seal, authorising a reserve but not the false account.","Royal clerk's audit");
+      addPoliticalEvidence("royal-seal","The king's reserve order","Aldric authorised a grain reserve for the keep during the shortage. The document does not show that he approved Alwyn's altered public figures.","Royal clerk's audit");
+      p.kingResponse="The royal clerk found a second ledger. It records grain moved into a private reserve and figures changed before the public account was copied. The king's seal authorised a reserve, but not the altered figures.";
+      remember("alwyn","The royal audit uncovered a second storehouse ledger showing grain diverted into a private reserve and an altered public tally.");
+      remember("aldric","The royal audit found Alwyn altered the public store tally while a separate reserve order carried the king's seal.");
+      addEvent("A royal audit has uncovered a second ledger and evidence of grain diverted by the steward.");addTimeline("The royal inquiry found evidence that Alwyn altered the storehouse account.");time(15);
+    }else if(action==="confront_king"&&state.location==="keep"&&activeAt("aldric")&&hasPoliticalEvidence("royal-audit")&&!p.kingConfronted){
+      p.kingConfronted=true;p.kingResponse="Aldric admits he authorised a reserve for the keep, but says he did not authorise the false tally or the private diversion. He accepts that he failed to oversee the steward properly.";
+      remember("aldric","When confronted with the audit, the king admitted signing a reserve order but denied authorising Alwyn's false tally. He accepted responsibility for failing to supervise him.");
+      addEvent("King Aldric has admitted authorising the reserve and accepted responsibility for failing to supervise Alwyn.");addTimeline("You confronted the king with the audit. He acknowledged his failure of oversight.");time(8);
+    }else if(action==="restore_order"&&p.kingConfronted&&state.location==="keep"&&activeAt("aldric")&&!p.outcome){
+      p.stewardRemoved=true;p.outcome="reform";p.kingResponse="Alwyn is removed from office pending judgment. The grain is to be returned to the public stores, the levy reviewed and the accounts read before the village.";
+      state.reputation="Advocate of the Commons";state.chapter="The Open Accounts";
+      adjust("margaret",{trust:4});adjust("rowan",{trust:3});adjust("mara",{trust:4});adjust("edmund",{trust:3});
+      addEvent("Alwyn has been removed pending judgment. The crown orders restitution and open storehouse accounts.");addTimeline("The king accepted the petition's demand for reform and restitution.");time(5);
+    }else if(action==="demand_regency"&&p.kingConfronted&&state.location==="keep"&&activeAt("aldric")&&p.signatures.length>=5&&p.evidence.length>=3&&politicsMetrics().commonSupport>=65&&!p.outcome){
+      p.outcome="regency";p.stewardRemoved=true;p.kingResponse="Aldric accepts a temporary council with elected representatives from the market, abbey and household. The council will oversee grain stores, levies and appointments while the king retains the crown.";
+      state.reputation="Voice of the Commons";state.chapter="The Council of Ashenford";
+      addEvent("Aldric has agreed to a temporary council with authority over the stores and public accounts.");addTimeline("The Common Petition secured a peaceful council regency.");time(8);
+    }else if(action==="demand_abdication"&&p.kingConfronted&&state.location==="keep"&&activeAt("aldric")&&p.signatures.length>=6&&p.evidence.length>=4&&politicsMetrics().commonSupport>=82&&!p.outcome){
+      p.outcome="abdication";p.stewardRemoved=true;p.kingResponse="Aldric agrees to step aside rather than divide the village. A temporary council will administer Ashenford while the lawful succession is settled.";
+      state.reputation="Architect of the Settlement";state.chapter="A Crown Laid Down";
+      addEvent("King Aldric has agreed to abdicate by public agreement. A temporary council will govern during the succession.");addTimeline("The Common Petition secured a peaceful transfer of authority.");time(10);
+    }else{
+      toast("That action cannot be completed here, or its conditions have not yet been met.");
+    }
+    save();render();renderCouncil();
+  }
 function openMap(){
     const nodes=[
       {id:"gate",x:120,y:245,icon:"⚑",label:"North Gate",sub:"The northern road"},
@@ -532,7 +700,8 @@ function openMap(){
   }
   function resume(){if(load()){$("#start-overlay").classList.add("hidden");render();toast("Your chronicle has been restored.");}else begin();}
   function wire(){
-    $$(".nav-item").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.view;activeTab=v;$$(".nav-item").forEach(n=>n.classList.toggle("active",n===b));if(v==="world")toast("You are exploring Ashenford.");if(v==="journal")openJournal();if(v==="people")openPeople();if(v==="inventory")openInventory();}));
+    $$(".nav-item").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.view;activeTab=v;$$(".nav-item").forEach(n=>n.classList.toggle("active",n===b));if(v==="world")toast("You are exploring Ashenford.");if(v==="council")openCouncil();if(v==="journal")openJournal();if(v==="people")openPeople();if(v==="inventory")openInventory();}));
+    $("#modal-content").addEventListener("click",e=>{const actionButton=e.target.closest("[data-council-action]");if(actionButton&&!actionButton.disabled){councilAction(actionButton.dataset.councilAction);return;}const signButton=e.target.closest("[data-council-sign]");if(signButton&&!signButton.disabled){const id=signButton.dataset.councilSign;if(signatureReason(id)==="Ask for their signature"){state.politics.signatures.push(id);remember(id,"You asked them to support the Common Petition; they agreed to add their name.");addTimeline(people[id].name+" signed the Common Petition.");addEvent(people[id].name+" has added a name to the petition.");changeTime(3);if(state.politics.signatures.length>=3&&!state.politics.petitionStarted){state.politics.petitionStarted=true;addEvent("The Common Petition is now being discussed openly in the village.");}save();render();renderCouncil();}}});
     $("#begin-game").addEventListener("click",begin);$("#continue-game").addEventListener("click",resume);
     $$(".role-option").forEach(b=>b.addEventListener("click",()=>{selectedRole=b.dataset.role;$$(".role-option").forEach(x=>x.classList.toggle("selected",x===b));}));
     $("#close-dialogue").addEventListener("click",closeDialogue);$("#dialogue-overlay").addEventListener("click",e=>{if(e.target===$("#dialogue-overlay"))closeDialogue();});
