@@ -65,6 +65,19 @@ The first build stores these values in the local save. Conversation choices and 
 5. Add scheduled NPC routines, off-screen conversations, rumour propagation, relationship graphs, quest deadlines, and event simulation in bounded steps.
 6. Expand the 2D map with walkable scenes, animated sprite sheets, consistent character art references, sound, and accessibility options.
 
+## Coercion, rumours and royal judgement
+
+NPCs can have specific weaknesses revealed through earlier quest evidence. The dialogue option to threaten disclosure is limited to those discovered facts and can only be used once per character in a chronicle.
+
+- Coercion may win a reluctant statement or a copy of a record, but such material is marked as contested and does not count as independent evidence in court.
+- The person threatened may retaliate with a false rumour. Rumours begin as unverified whispers, spread around the market, tavern, gate and keep over subsequent in-game days, and raise royal suspicion.
+- Three or more widely repeated false rumours, alongside high royal suspicion, trigger a sealed summons from King Aldric. The player must appear within two days.
+- A player can challenge individual rumours at court using at least two independent records and two willing signatories. Two successfully challenged rumours are enough to make a royal appeal.
+- If the player fails to answer the summons or cannot defend the accusations, the king orders a death sentence. The consequence is narrated off-screen, without graphic depiction, and closes that chronicle. A new chronicle can then be started.
+- Rumour state, blackmail attempts, suspicion, deadlines and judgement outcomes persist in the local save and are safely added to older version-1 chronicles.
+
+The system makes coercion a risky social choice: short-term compliance can cost trust, create contested evidence and damage the player's standing.
+
 ## Open-source direction
 
 The application code and original game data are released under the MIT licence. Any language model weights or services integrated later will retain their own licences and terms; an open-weight model is not automatically free to host or unrestricted for every use.
