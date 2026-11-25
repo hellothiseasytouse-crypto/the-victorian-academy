@@ -246,7 +246,7 @@ async function askNoxenStudio(text,personId){
     ].join("\n");
     const timeout=setTimeout(()=>controller.abort(),12000);
     try{
-      const response=await fetch("https://noxenlabs.vercel.app/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:prompt,selectedModel:"NOXEN Studio",agentMode:false,webSearch:false,attachments:[]}),signal:controller.signal});
+      const response=await fetch("https://noxenlabs.vercel.app/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:prompt,selectedModel:"NOXEN Studio",agentMode:false,webSearch:false,attachments:[],history:(state.dialogueLog[personId]||[]).filter(line=>!line.pending).slice(-10).map(line=>({role:line.who==="You"?"user":"assistant",content:String(line.text||"").slice(0,500)}))}),signal:controller.signal});
       const data=await response.json().catch(()=>({}));
       if(!response.ok||typeof data.answer!=="string"||!data.answer.trim())throw new Error(data.error||"NOXEN Studio is unavailable.");
       let raw=data.answer.trim(),cut=raw.indexOf("**Images from the web**");if(cut>=0)raw=raw.slice(0,cut).trim();
