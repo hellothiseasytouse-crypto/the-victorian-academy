@@ -132,9 +132,9 @@
         if(h>=10&&h<17)return {place:"gate",activity:"watching the road between loads of washing",available:true};
         return {place:"gate",activity:"away at work or searching the road",available:false};
       case "hobb":
-        if(h>=5&&h<9)return {place:"gate",activity:"checking carts and questioning early travellers",available:true};
-        if(h>=9&&h<11)return {place:"keep",activity:"giving the morning report to the steward",available:true};
-        if(h>=11&&h<21)return {place:"gate",activity:"keeping watch and checking the road",available:true};
+        if(h>=5&&h<13)return {place:"gate",activity:h<9?"checking carts and questioning early travellers":"keeping the register and speaking with people at the gate",available:true};
+        if(h>=13&&h<14)return {place:"keep",activity:"giving the midday gate report to the steward",available:true};
+        if(h>=14&&h<21)return {place:"gate",activity:"keeping watch and checking the road",available:true};
         return {place:"gate",activity:"off duty at the gatehouse",available:false};
       case "alwyn":
         if(h>=7&&h<12)return {place:"keep",activity:"checking the stores and the day's accounts",available:true};
@@ -500,6 +500,7 @@ function politicsMetrics(){
     if(p.outcome==="regency")return "A temporary village council now shares authority with the crown. The settlement is waiting to see whether reform will last.";
     if(p.outcome==="reform")return "The steward has been removed pending judgment, and the storehouse accounts are being opened to public review.";
     if(p.inquiryOpened)return "The king has ordered an inquiry into complaints about grain levies and the royal storehouse. Rumours are spreading, but the facts remain disputed.";
+    if(p.assemblyCalled)return "The Common Petition has held a peaceful assembly. Some residents demand a council to oversee the crown; others remain loyal to Aldric or fear the uncertainty of change.";
     if(p.signatures.length>=3)return "A Common Petition is gathering names. Some residents want a public hearing and elected oversight; others fear disorder.";
     if(p.grievances.length)return "Several residents have complained about grain levies, shortages and the way the steward's household keeps accounts. These are complaints, not yet proven facts.";
     return "People grumble about prices, levies and the cost of keeping the king's household. No public petition has yet been organised.";
@@ -554,6 +555,7 @@ function politicsMetrics(){
         <p class="council-note">People sign only when they have a reason to risk being seen against the steward. Meet them first, hear their concerns and bring something they can stand behind.</p>
         <div class="council-action-grid">
           ${action("ask_steward","Question Steward Alwyn","Ask him to explain the shortages and the handling of village levies.",state.location==="keep"&&at("alwyn")&&!p.inquiryOpened,"The steward is at the keep during office hours")}
+          ${action("call_assembly","Call a village assembly","Invite residents to meet peacefully and discuss council oversight of the crown.",state.location==="market"&&at("margaret")&&grievanceCount>=2&&signatureCount>=3&&!p.assemblyCalled,"Requires two grievances and three petition signatures")}
           ${action("request_audience","Request an audience","Hobb can issue a pass once a credible petition reaches the gate.",state.location==="gate"&&at("hobb")&&grievanceCount>=2&&evidenceCount>=2&&signatureCount>=3&&!state.flags.keepUnlocked,"Bring two grievances, two pieces of testimony and three signatures to Hobb")}
           ${action("present_petition","Present the petition to King Aldric","Ask the crown to open the storehouse accounts and hear the villagers.",state.location==="keep"&&kingReady&&petitionReady&&!p.inquiryOpened,"Bring three signatures, two grievances and two pieces of testimony to the keep")}
         </div>
@@ -608,6 +610,10 @@ function politicsMetrics(){
       p.stewardQuestioned=true;p.kingResponse="Alwyn insists the reserve is accounted for and says the public figures are incomplete. He refuses to discuss private stores without a royal order.";
       remember("alwyn","You asked about the grain shortages. He said the reserve is accounted for and refused to discuss the private store without royal authority.");
       addEvent("Steward Alwyn has denied wrongdoing and asked for a royal order before showing the reserve accounts.");time(8);
+    }else if(action==="call_assembly"&&state.location==="market"&&activeAt("margaret")&&p.grievances.length>=2&&p.signatures.length>=3&&!p.assemblyCalled){
+      p.assemblyCalled=true;
+      p.kingResponse="A public meeting has been called at the Market Cross. Residents may speak for reform, council oversight or the continuation of the crown.";
+      addEvent("The Common Petition has called a peaceful village assembly. Some residents are asking whether Ashenford should be governed by a council.");addTimeline("Residents gathered at the Market Cross to debate the crown's authority and the steward's accounts.");time(20);
     }else if(action==="request_audience"&&state.location==="gate"&&activeAt("hobb")&&p.grievances.length>=2&&p.evidence.length>=2&&p.signatures.length>=3&&!state.flags.keepUnlocked){
       state.flags.keepUnlocked=true;p.audiencePass=true;
       addEvent("Serjeant Hobb has issued a formal pass for a petition to be presented at the keep.");addTimeline("Hobb granted you an audience pass after reviewing the petition's supporting names and records.");time(6);toast("Hobb has granted you access to the keep.");
