@@ -23,6 +23,19 @@ A bell is heard after the abbey clapper is removed. The player follows a chain o
 - **The Missing Courier:** help Mara investigate a clue left on the north road.
 - **The Royal Dispatch:** the courier background carries a sealed letter that can open the way to the keep.
 
+## Political crisis: The Weight of the Crown
+
+The village's grain shortage creates a political conflict that can be investigated independently of the bell mystery.
+
+- **Public grievances:** Margaret, Mara, Rowan and Edmund can raise concerns about grain levies, unpaid cart work, gate deliveries and infirmary supplies.
+- **Evidence:** the player can compare market tallies, hear a tavern witness, review Hobb's gate register and inspect infirmary delivery notes. These are separate testimony records, not automatic proof of guilt.
+- **The steward's corruption:** a petition with sufficient evidence, grievances and signatures can earn an audience with King Aldric. A royal inquiry reveals a second ledger showing that Steward Alwyn diverted relief grain and altered the public tally.
+- **The king's responsibility:** Aldric authorised an emergency reserve but failed to supervise the steward. The player can demand restitution and reform, a temporary council with authority over the crown, or a peaceful abdication and lawful succession.
+- **Public movement:** residents can call a peaceful assembly and form the Common Petition. Some support council oversight, some remain loyal to the crown, and others fear instability. A political outcome depends on evidence and broad support rather than one dialogue choice.
+- **Persistence:** grievances, evidence, signatures, inquiry status and political outcomes are stored in the local chronicle and migrated safely from older version-1 saves.
+
+The political route is designed around testimony, public pressure, petitioning, hearings and lawful changes of government. It does not turn into a tactical violence simulator.
+
 ## Character state model
 
 Each character has a profile, dialogue style, knowledge boundaries, a location schedule, short memory list, and five emotion meters:
