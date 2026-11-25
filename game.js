@@ -77,15 +77,15 @@
   function remember(id,text){const p=ps(id);p.memories.unshift(text);p.memories=p.memories.slice(0,5);}
   function relationshipFor(id){
     const e=ps(id).emotions,trust=e.trust||0,fear=e.fear||0,anger=e.anger||0;
-    if(fear>=72)return {title:"Frightened of you",summary:"They keep their distance and watch your actions carefully.",trust};
-    if(anger>=72)return {title:"Deeply offended",summary:"A serious grievance stands between you; patience and amends are needed.",trust};
-    if(trust>=88)return {title:"Steadfast ally",summary:"They would stand beside you when the village grows difficult.",trust};
-    if(trust>=72)return {title:"Trusted confidant",summary:"They share concerns they would keep from a stranger.",trust};
-    if(trust>=55)return {title:"Esteemed friend",summary:"Your words carry weight, and goodwill has taken root.",trust};
-    if(trust>=38)return {title:"Familiar face",summary:"They recognise you and remember the good you have done.",trust};
-    if(fear>=45)return {title:"Wary of you",summary:"They remain guarded until your actions give them reason to relax.",trust};
-    if(anger>=35)return {title:"Irritated",summary:"Your last dealings have left them displeased.",trust};
-    return {title:ps(id).met?"Cautious acquaintance":"Unknown",summary:ps(id).met?"You are known to one another, but trust must still be earned.":"You have not yet made their acquaintance.",trust};
+    if(fear>=72)return {title:"Avoids your company",summary:"They keep their distance and watch what you do.",trust};
+    if(anger>=72)return {title:"Still bears a grudge",summary:"Something between you remains unresolved. A polite word will not erase it.",trust};
+    if(trust>=88)return {title:"Would vouch for you",summary:"They have seen you follow through when it mattered.",trust};
+    if(trust>=72)return {title:"Trusts your word",summary:"They are willing to share concerns and ask for your help.",trust};
+    if(trust>=55)return {title:"Respects you",summary:"They take you seriously, though they still make up their own mind.",trust};
+    if(trust>=38)return {title:"Knows you by sight",summary:"They recognise you and remember how you have dealt with them.",trust};
+    if(fear>=45)return {title:"Wary of you",summary:"They remain guarded and watch for signs of trouble.",trust};
+    if(anger>=35)return {title:"Irritated with you",summary:"Your last dealings left them displeased.",trust};
+    return {title:ps(id).met?"On speaking terms":"A stranger",summary:ps(id).met?"They know who you are, but have little reason to rely on you yet.":"They have no reason to know or trust you yet.",trust};
   }
   function adjust(id,delta){
     const e=ps(id).emotions;Object.entries(delta).forEach(([k,v])=>{if(k in e)e[k]=clamp(e[k]+v);});
@@ -161,7 +161,7 @@
   }
   function localContextFor(id){
     const routine=routineFor(id),weather=weatherForToday();
-    return {time:timeLabel(),dayPart:dayPart(),weather:weather.label,weatherDetail:weather.detail,place:places[state.location].name,localScene:ambientForPlace(state.location),activity:routine.activity,relationship:relationshipFor(id).title,meetings:ps(id).meetings||0,lastMetDay:ps(id).lastMetDay||0,lastMetPlace:ps(id).lastMetPlace||""};
+    return {time:timeLabel(),dayPart:dayPart(),weather:weather.label,weatherDetail:weather.detail,place:places[state.location].name,localScene:ambientForPlace(state.location),activity:routine.activity,relationship:relationshipFor(id).title,meetings:ps(id).meetings||0,daysSinceLastMeeting:Math.max(0,state.day-(ps(id).previousMetDay||state.day)),lastMetPlace:ps(id).lastMetPlace||""};
   }
   function activeAt(id){
     const routine=routineFor(id);
@@ -263,13 +263,13 @@ function renderGuide(){
     render();save();toast("You reached "+places[id].name+" after about "+minutes+" minutes on foot.");
   }
   function openDialogue(id){
-    activePerson=id;const p=people[id],s=ps(id),firstMeeting=!s.met;
-    s.met=true;s.meetings=(s.meetings||0)+1;s.lastMetDay=state.day;s.lastMetMinute=state.minute;s.lastMetPlace=state.location;
+    activePerson=id;const p=people[id],s=ps(id),firstMeeting=!s.met,previousMetDay=s.lastMetDay||0;
+    s.met=true;s.meetings=(s.meetings||0)+1;s.previousMetDay=previousMetDay;s.lastMetDay=state.day;s.lastMetMinute=state.minute;s.lastMetPlace=state.location;
     if(firstMeeting)remember(id,"You first met at "+places[state.location].short+" on day "+state.day+".");
+    else if(previousMetDay>0&&state.day>previousMetDay+2)remember(id,"Several days passed before you met again.");
     $("#dialogue-role").textContent=p.role.toUpperCase();$("#dialogue-name").textContent=p.name;const regard=relationshipFor(id);$("#dialogue-status").textContent=regard.summary;$("#character-profile").innerHTML=`<div class="portrait-large">${p.icon}</div><div class="profile-name">${p.name}</div><div class="profile-role">${p.role}</div><p class="profile-lore">${p.lore}</p><div class="profile-connections"><strong>KNOWN CONNECTIONS</strong><span>${p.connections}</span></div><div class="npc-regard-card"><span class="npc-regard-kicker">THEIR REGARD</span><strong class="npc-regard-title">${regard.title}</strong><small class="npc-regard-copy">${regard.summary}</small></div>`;
     const log=state.dialogueLog[id]||[];
     if(!log.length)log.push({who:p.name,text:normalizeNpcSpeech(p.greeting)});
-    else if(!firstMeeting){const lastDay=s.lastMetDay||state.day; if(state.day>lastDay+2)remember(id,"Some time has passed since your last meeting.");}
     state.dialogueLog[id]=log;renderDialogue();$("#dialogue-overlay").classList.remove("hidden");renderPeople();save();
   }
   const emotionColors={fear:"#a84f45",concern:"#c79742",anger:"#c56d3c",trust:"#66835d",curiosity:"#6488a9"};
@@ -310,9 +310,9 @@ function renderGuide(){
   function closeDialogue(){if(activeRequestController)activeRequestController.abort();activeRequestController=null;if(pendingDialogueLine&&activePerson){const log=state.dialogueLog[activePerson]||[];const i=log.indexOf(pendingDialogueLine);if(i>=0)log.splice(i,1);}pendingDialogueLine=null;const input=$("#speech-input"),send=$("#speech-form button");if(input)input.disabled=false;if(send)send.disabled=false;$("#dialogue-overlay").classList.add("hidden");activePerson=null;render();}
   function completeBell(outcome){
     state.quests.bell=4;state.flags.ending=outcome;state.chapter="The Bell at Dusk";state.reputation=outcome==="protect"?"A Keeper of Secrets":outcome==="expose"?"Truth-Teller":"Voice of the Village";state.flags.keepUnlocked=true;
-    if(outcome==="protect"){adjust("anselm",{trust:35,fear:-25});adjust("edmund",{trust:8,concern:-5});addEvent("A quiet kindness has been shown to Brother Anselm.");}
-    if(outcome==="expose"){adjust("anselm",{fear:32,trust:-28,anger:12});adjust("hobb",{trust:12});addEvent("Word spreads that the abbey bell mystery has been exposed.");}
-    if(outcome==="hearing"){adjust("anselm",{fear:-12,trust:14});adjust("margaret",{trust:12});addEvent("The village has been called to hear the truth together.");}
+    if(outcome==="protect"){adjust("anselm",{trust:12,fear:-12});adjust("edmund",{trust:8,concern:-5});addEvent("A quiet kindness has been shown to Brother Anselm.");}
+    if(outcome==="expose"){adjust("anselm",{fear:20,trust:-14,anger:8});adjust("hobb",{trust:4});addEvent("Word spreads that the abbey bell mystery has been exposed.");}
+    if(outcome==="hearing"){adjust("anselm",{fear:-6,trust:6});adjust("margaret",{trust:4});addEvent("The village has been called to hear the truth together.");}
     addTimeline("You resolved The Bell at Dusk: "+({protect:"you protected Anselm",expose:"you exposed the hidden bell",hearing:"you called a village hearing"}[outcome])+".");addTimeline("The keep has opened its doors to you.");save();render();
   }
   function respondChoice(index){
@@ -320,23 +320,23 @@ function renderGuide(){
     if(action==="protect"||action==="expose"||action==="hearing"){say(action==="protect"?"Then I shall carry this burden with thee. The bell was mine, and I rang it to guide food to the cottages beyond the mill.":"Thou wouldst have the village know? I rang the handbell to guide provisions to families kept apart from the road. I meant no deception.","");completeBell(action);say(({protect:"Thou hast shown mercy. I shall remember it, traveller.",expose:"So the truth is out. May the village judge me fairly.",hearing:"Then let them hear it from my own lips. I am weary of hiding."})[action]);renderDialogue();return;}
     if(action==="bell"){
       if(id==="edmund"){say("The abbey swears its clapper was removed. Yet a bell rang after midnight. I heard it from the infirmary window.");adjust(id,{curiosity:8,concern:6});if(state.quests.bell===0){state.quests.bell=1;addTimeline("Edmund asked you to learn who rang the bell.");}}
-      else if(id==="rowan"){say("A cloaked figure crossed the yard after the second watch. I heard a small handbell, not the abbey bell.");adjust(id,{trust:5,curiosity:4});if(state.quests.bell===1){state.quests.bell=2;addTimeline("Rowan remembers a cloaked figure near the abbey.");}}
+      else if(id==="rowan"){say("A cloaked figure crossed the yard after the second watch. I heard a small handbell, not the abbey bell.");adjust(id,{trust:1,curiosity:2});if(state.quests.bell===1){state.quests.bell=2;addTimeline("Rowan remembers a cloaked figure near the abbey.");}}
       else if(id==="margaret"){say("A length of hemp cord was bought here days ago. The buyer wore a novice's brown habit, though I saw no face.");adjust(id,{curiosity:8});if(state.quests.bell===2){state.quests.bell=3;addTimeline("Margaret recalls a novice buying hemp cord.");}}
       else {say("There are many tales of bells in Ashenford. Ask Edmund, Rowan, and Margaret, and compare their accounts.");}
     } else if(action==="ledger"){
       if(state.quests.ledger<0){state.quests.ledger=0;say("My ledger is in poor order. If thou canst bring rosemary and clean linen, I shall owe thee a favour.");addTimeline("Edmund entrusted you with a small errand for the infirmary.");}
-      else if(state.flags.herbs&&state.flags.linen){state.quests.ledger=2;say("Rosemary and linen. Well gathered. Thou hast my thanks, and a little trust besides.");state.inventory=state.inventory.filter(x=>!["rosemary","linen"].includes(x.id));adjust("edmund",{trust:20,concern:-8});addTimeline("You completed A Physician's Ledger.");addEvent("Edmund has praised a traveller's help at the infirmary.");}
+      else if(state.flags.herbs&&state.flags.linen){state.quests.ledger=2;say("Rosemary and linen. Well gathered. Thou hast my thanks, and a little trust besides.");state.inventory=state.inventory.filter(x=>!["rosemary","linen"].includes(x.id));adjust("edmund",{trust:8,concern:-4});addTimeline("You completed A Physician's Ledger.");addEvent("Edmund has praised a traveller's help at the infirmary.");}
       else say("I still require rosemary and clean linen. Search the market stalls.");
     } else if(action==="parcel"){
       if(id==="margaret"){if(state.quests.parcel<0){state.quests.parcel=0;state.inventory.push({id:"sealed-parcel",name:"Margaret's sealed parcel",icon:"📦",desc:"A small parcel tied with twine, addressed to Rowan."});say("Take this parcel to Rowan at the Fox & Lantern. Do not open it; the contents are none of thy concern.");addTimeline("Margaret gave you a sealed parcel for Rowan.");}else say("Have Rowan received the parcel? I would know it safely delivered.");}
-      else if(id==="rowan"&&state.quests.parcel===0){state.quests.parcel=1;state.inventory=state.inventory.filter(x=>x.id!=="sealed-parcel");say("Ah, Margaret's parcel. I shall see it safely put away. Tell her the old debt is remembered.");adjust("rowan",{trust:12});adjust("margaret",{trust:8});addTimeline("You delivered Margaret's sealed parcel to Rowan.");addEvent("A small debt between the merchant and innkeeper has been settled.");}
+      else if(id==="rowan"&&state.quests.parcel===0){state.quests.parcel=1;state.inventory=state.inventory.filter(x=>x.id!=="sealed-parcel");say("Ah, Margaret's parcel. I shall see it safely put away. Tell her the old debt is remembered.");adjust("rowan",{trust:5});adjust("margaret",{trust:3});addTimeline("You delivered Margaret's sealed parcel to Rowan.");addEvent("A small debt between the merchant and innkeeper has been settled.");}
       else say("If Margaret has sent thee, I shall hear what she has to say.");
     } else if(action==="will"){
-      if(id==="mara"){if(state.quests.will<0){state.quests.will=0;say("My cousin Will vanished on the northern road. If thou findest anything, bring it to me.");addTimeline("Mara asked you to search for her missing cousin Will.");}else if(state.flags.willFound){state.quests.will=2;say("This strap is his. I know the stitching. He was near the old mill road, then. Thank thee for bringing it.");adjust("mara",{trust:25,concern:-16});addTimeline("Mara recognised Will's broken satchel strap.");}else say("Search the roadside by the North Gate. He may have left a clue.");}
+      if(id==="mara"){if(state.quests.will<0){state.quests.will=0;say("My cousin Will vanished on the northern road. If thou findest anything, bring it to me.");addTimeline("Mara asked you to search for her missing cousin Will.");}else if(state.flags.willFound){state.quests.will=2;say("This strap is his. I know the stitching. He was near the old mill road, then. Thank thee for bringing it.");adjust("mara",{trust:10,concern:-8});addTimeline("Mara recognised Will's broken satchel strap.");}else say("Search the roadside by the North Gate. He may have left a clue.");}
       else say("Mara has been asking after her cousin. The north road may hold an answer.");
-    } else if(action==="clue"){if(state.flags.willFound){state.quests.will=2;say("I know this strap. Will carried it on the road. I must speak with Hobb.");adjust(id,{trust:20,concern:-10});}else say("Thou hast found no clue yet. Search the north road.");}
+    } else if(action==="clue"){if(state.flags.willFound){state.quests.will=2;say("I know this strap. Will carried it on the road. I must speak with Hobb.");adjust(id,{trust:8,concern:-5});}else say("Thou hast found no clue yet. Search the north road.");}
     else if(action==="tower"){say("A hidden handbell and frayed hemp cord. Someone has been using the tower stair.");}
-    else if(action==="dispatch"){if(state.role==="courier"){state.flags.keepUnlocked=true;adjust(id,{trust:12});say("A royal seal? Very well. The keep shall receive thee. Proceed to Steward Alwyn.");}else say("A royal dispatch is not a token to be borrowed. What business hast thou with the crown?");}
+    else if(action==="dispatch"){if(state.role==="courier"){state.flags.keepUnlocked=true;adjust(id,{trust:4});say("A royal seal? Very well. The keep shall receive thee. Proceed to Steward Alwyn.");}else say("A royal dispatch is not a token to be borrowed. What business hast thou with the crown?");}
     else if(action==="modern"){say(modernReply(id,"a strange device of the future"));adjust(id,{fear:10,curiosity:12});}
     else if(action==="plague"){say("There is sickness in the village, and fear travels faster than any cart. I shall speak only of what I have witnessed; rumour is no physician.");adjust(id,{concern:5});}
     else if(action==="patients"){say("The infirmary is full, though I keep my patients' names from idle tongues. Bring clean linen, and I may tell thee what help is needed.");}
@@ -374,7 +374,7 @@ function renderGuide(){
       "MANNER: "+(profile.manner||"Speak plainly and consistently with your character.")+" Current worry: "+(profile.concern||"Their own ordinary concerns.")+" Knowledge: "+(profile.knowledge||"Only what this person could reasonably know."),
       "RIGHT NOW: "+context.activity+". The place is "+context.place+". It is "+context.dayPart+" at "+context.time+". Weather: "+context.weather+". Surroundings: "+context.localScene,
       "PLAYER: "+state.roleName+". Social position: "+(roles[state.role]?.station||state.roleName)+". Let their position affect relevant forms of address and expectations, but do not assume their gender, personality or ability.",
-      "RELATIONSHIP: "+context.relationship+". They have met the player "+context.meetings+" time(s). Memories: "+memory,
+      "RELATIONSHIP: "+context.relationship+". They have met the player "+context.meetings+" time(s); "+context.daysSinceLastMeeting+" day(s) have passed since the previous meeting. Memories: "+memory,
       "QUEST CONTEXT: "+q.name+" — "+q.desc+". Current recorded facts: bell stage "+state.quests.bell+", ledger stage "+state.quests.ledger+", parcel stage "+state.quests.parcel+", missing courier stage "+state.quests.will+". Never invent a completed task, clue, promise or event.",
       "STYLE: Use clear, natural, spoken English that is easy to understand. The setting is medieval, but do not imitate Shakespeare. Do not use 'thou', 'thee', 'thy', fake archaic grammar or constant grand speeches. A little period-appropriate vocabulary is fine when natural.",
       "REALISM: Answer the exact thing the player said. Use what you know, not what would make the plot convenient. You may be busy, distracted, uncertain, suspicious, tired, amused, impatient or unwilling to answer. Do not agree with everything. Do not become close because of one compliment. Do not repeat greetings, explain the whole quest, or end every reply with a question. Vary the length naturally, usually one to three short sentences.",
@@ -440,7 +440,7 @@ function renderGuide(){
     else if(/help|quest|task|job|work/.test(low)){reply="There is always work for an honest pair of hands. Speak with the folk of the market, the infirmary, and the tavern; each has a burden to share.";adjust(id,{curiosity:4});}
     else if(/king|queen|royal|castle|keep/.test(low)){reply="The keep overlooks us all. King Aldric expects loyalty, while Steward Alwyn expects his accounts to be exact.";}
     else {reply=id==="margaret"?"I'm listening. Be specific; there's work to do here.":id==="rowan"?"Go on. I'm here, though I may have to see to the kitchen in a moment.":id==="mara"?"What is it? I can't stand here all morning.":id==="edmund"?"Tell me what happened, in order. Leave out the guesses.":id==="anselm"?"I'm not sure I follow. Could you explain what you mean?":id==="hobb"?"I need a clear answer, not a long story.":id==="alwyn"?"Please get to the point. I have accounts to finish.":"I hear you. What matters most is what can be proved.";}
-    say(reply);if(/\b(i promise|i found|i brought|i saw|i heard|i delivered|i returned|i helped|my name|my family)\b/i.test(t))remember(id,"You said: "+t.slice(0,90));adjust(id,{curiosity:1});renderDialogue();render();save();
+    say(reply);if(/\b(i promise|i found|i brought|i saw|i heard|i delivered|i returned|i helped|my name|my family)\b/i.test(t))remember(id,"You said: "+t.slice(0,90));renderDialogue();render();save();
   }
   function sceneAction(action){
     if(action==="tower"){
