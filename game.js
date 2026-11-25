@@ -119,7 +119,24 @@
     $("#world-events").innerHTML=state.events.slice(0,4).map((e,i)=>`<div class="event-item"><span class="event-time">${i===0?"NOW":"EARLIER"}</span><span class="event-copy">${escapeHtml(e)}</span></div>`).join("");
     $("#timeline-list").innerHTML=state.timeline.slice(0,4).map(e=>`<div class="timeline-entry"><span class="timeline-pin"></span><span class="timeline-copy"><strong>Day ${roman(e.day)} · ${e.time}</strong>${escapeHtml(e.text)}</span></div>`).join("")||'<span class="speech-hint">Your chronicle awaits its first entry.</span>';
   }
-  function render(){
+function renderGuide(){
+    const q=activeQuest(),atMarket=state.location==="market",margaretHere=activeAt("margaret");
+    const firstStep=state.quests.bell===0;
+    const title=firstStep?"Your first step":"Your current objective";
+    const description=firstStep?"Speak with Margaret at the Market Cross. Ask about the strange bell after midnight.":q.desc;
+    const actionLabel=firstStep?(atMarket&&margaretHere?"Talk to Margaret":"Travel to the Market Cross"):"Open your journal";
+    const action=firstStep?(atMarket&&margaretHere?"talk-margaret":"go-market"):"open-journal";
+    const el=$("#guide-card");if(!el)return;
+    el.innerHTML=`<div class="guide-mark">✦</div><div class="guide-copy"><span class="guide-kicker">${title}</span><strong>${escapeHtml(q.name)}</strong><p>${escapeHtml(description)}</p></div><button class="guide-action" data-guide-action="${action}">${actionLabel} <span>→</span></button>`;
+    const button=el.querySelector("[data-guide-action]");
+    if(button)button.addEventListener("click",()=>{
+      if(action==="talk-margaret")openDialogue("margaret");
+      else if(action==="go-market")travel("market");
+      else openJournal();
+    });
+  }
+    function render(){
+    renderGuide();
     $("#clock-label").textContent="Day "+roman(state.day)+" · "+timeLabel();$("#header-date").textContent="THE YEAR OF OUR LORD 1348";$("#weather-label").textContent=state.day%3===0?"Cold drizzle":"Low mist";$("#role-label").textContent=state.roleName;$("#rep-value").textContent=state.reputation;$("#chapter-label").textContent="Chapter I · "+state.chapter;$("#standing-title").textContent=state.reputation;$("#standing-desc").textContent=state.reputation==="Unknown"?"No one knows your name.":"Your name is beginning to travel.";
     renderScene();renderPlaces();renderPeople();renderEvents();
     const q=activeQuest();$("#active-quest-card").innerHTML=`<div class="quest-kicker">${q.meta}</div><div class="quest-name">${q.name}</div><div class="quest-summary">${q.desc}</div><div class="quest-progress"><span style="width:${q.progress}%"></span></div><div class="quest-meta">${q.progress}% · JOURNEY RECORDED</div>`;
@@ -209,8 +226,58 @@
     if(id==="hobb")return "No strange device shall pass the gate unexamined. Put it away and answer my questions.";
     return "Thou bringest strange wonders into my hall. Explain thy craft before I decide whether it is useful or forbidden.";
   }
-  function reactToFreeText(text){
-    const t=text.trim();if(!t||!activePerson)return;if(t.length>240)return;say(t,"You");changeTime(3);
+async function askNoxenStudio(text,personId){
+    const p=people[personId],saved=ps(personId);
+    const hint=$("#speech-hint");
+    if(hint)hint.textContent="NOXEN Studio is consulting this character's memories…";
+    const memory=saved.memories.slice(0,4).map(x=>"- "+x).join("\n")||"No personal memories yet.";
+    const prompt=[
+      "You are writing dialogue for a historically inspired medieval roleplaying game set in fictional Ashenford in 1348.",
+      "Stay completely in character as "+p.name+", a "+p.role+". Personality: "+p.lore+" Connections: "+p.connections,
+      "Voice: use readable medieval-leaning English, not random thee/thou in every sentence. Keep replies natural, vivid and concise (1–4 sentences).",
+      "Knowledge boundary: you know only medieval life and the facts below. Modern devices, internet, AI and slang are baffling or seem like witchcraft; react with believable confusion, suspicion or curiosity. Never suddenly understand modern technology.",
+      "Do not control the player, invent completed quests, claim to move the world, or contradict known facts. Do not give real medical advice. Disease and medicine are fictional story context.",
+      "Character's current emotional state (0–100): "+JSON.stringify(saved.emotions),
+      "What this character remembers:\n"+memory,
+      "Current place: "+places[state.location].name+". Day "+state.day+", "+timeLabel()+". Player background: "+state.roleName+". Current story thread: "+activeQuest().name+" — "+activeQuest().desc,
+      "Return ONLY valid JSON with keys: reply (string), emotion_delta (object with optional fear, concern, anger, trust, curiosity integers from -6 to 6), memory (short string or empty). Do not include markdown fences.",
+      "Player says: "+text.slice(0,240)
+    ].join("\n\n");
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),18000);
+    try{
+      const response=await fetch("https://noxenlabs.vercel.app/api/chat",{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({message:prompt,selectedModel:"NOXEN Studio",agentMode:false,webSearch:false,attachments:[]}),
+        signal:controller.signal
+      });
+      const data=await response.json().catch(()=>({}));
+      if(!response.ok||typeof data.answer!=="string"||!data.answer.trim())throw new Error(data.error||"NOXEN Studio is unavailable.");
+      let parsed=null;const raw=data.answer.trim().replace(/^\`\`\`(?:json)?\s*/i,"").replace(/\s*\`\`\`$/,"");
+      try{parsed=JSON.parse(raw);}catch{}
+      const reply=typeof parsed?.reply==="string"?parsed.reply.trim():data.answer.trim();
+      if(!reply)throw new Error("NOXEN returned an empty reply.");
+      if(activePerson!==personId)return;
+      say(reply.slice(0,1100));
+      const delta=parsed?.emotion_delta&&typeof parsed.emotion_delta==="object"?parsed.emotion_delta:{};
+      const safeDelta={};["fear","concern","anger","trust","curiosity"].forEach(k=>{const n=Number(delta[k]);if(Number.isFinite(n))safeDelta[k]=Math.max(-6,Math.min(6,Math.round(n)));});
+      adjust(personId,safeDelta);
+      if(typeof parsed?.memory==="string"&&parsed.memory.trim())remember(personId,parsed.memory.trim().slice(0,140));
+      remember(personId,"You said: "+text.slice(0,90));
+      renderDialogue();render();save();
+      if(hint)hint.textContent="Speaking with NOXEN Studio · Character roleplay";
+    }catch(error){
+      if(activePerson!==personId)return;
+      if(hint)hint.textContent="NOXEN Studio unavailable · local dialogue used";
+      reactToFreeText(text,true);
+    }finally{clearTimeout(timeout);}
+  }
+  function handlePlayerSpeech(text){
+    const value=String(text||"").trim();if(!value||!activePerson||value.length>240)return;
+    const personId=activePerson;say(value,"You");changeTime(3);save();
+    askNoxenStudio(value,personId);
+  }
+    function reactToFreeText(text,alreadyLogged=false){
+    const t=text.trim();if(!t||!activePerson)return;if(t.length>240)return;if(!alreadyLogged)say(t,"You");changeTime(3);
     const low=t.toLowerCase(),id=activePerson,p=people[id];let reply="";
     if(/phone|smartphone|computer|laptop|internet|wifi|wi-fi|google|ai\b|robot|electric|electricity|satellite|car\b|engine|camera|app\b/.test(low)){reply=modernReply(id,t);adjust(id,{fear:8,curiosity:14});remember(id,"You spoke of a strange modern invention.");}
     else if(/bro|bruh|lol|lmao|no cap|cooked|ate|slay|rizz|fr|ngl|idk/.test(low)){reply="Good heavens! What peculiar cant is this? Speak plainly, traveller; I cannot make sense of half these clipped expressions.";adjust(id,{anger:4,curiosity:5});}
@@ -254,13 +321,49 @@
     openModal("People of Ashenford",`<div class="journal-grid">${cards}</div>`,"THE SETTLEMENT");
   }
   function openInventory(){openModal("Your satchel",`<div class="inventory-grid">${state.inventory.map(i=>`<div class="inventory-item"><span>${i.icon}</span><strong>${escapeHtml(i.name)}</strong><small>${escapeHtml(i.desc)}</small></div>`).join("")||"<p>Your satchel is empty.</p>"}</div>`,"BELONGINGS & FINDS");}
-  function openMap(){
-    const buttons=Object.entries(places).map(([id,p])=>`<button class="choice-button" data-map-place="${id}" ${id==="keep"&&!state.flags.keepUnlocked&&state.role!=="courier"?"disabled":""}>${p.icon} ${p.name}</button>`).join("");
-    openModal("Map of Ashenford",`<div style="padding:15px;background:linear-gradient(135deg,#a9aa8b,#d5c49c);border:1px solid #806b48;color:#332b20"><div style="font:600 19px Georgia;margin-bottom:8px">Ashenford and the northern road</div><p style="font:italic 12px Georgia">A small settlement clustered beneath the abbey, with the lord's keep above the eastern road.</p><div style="display:flex;gap:8px;flex-wrap:wrap">${buttons}</div><div style="height:150px;margin-top:12px;background:linear-gradient(130deg,#7b856d 0 22%,#cbbb97 22% 28%,#746e58 28% 33%,#cabb9b 33% 63%,#72806b 63%);border:1px solid #8e7b58;display:grid;place-items:center;font:italic 14px Georgia;color:#f1e4cc;text-shadow:0 1px 5px #333">The six places of Ashenford</div></div>`,"THE SETTLEMENT");
-    $$("[data-map-place]").forEach(b=>b.addEventListener("click",()=>{const id=b.dataset.mapPlace;closeModal();travel(id);}));
+function openMap(){
+    const nodes=[
+      {id:"gate",x:120,y:245,icon:"⚑",label:"North Gate",sub:"The northern road"},
+      {id:"infirmary",x:285,y:365,icon:"✚",label:"Infirmary",sub:"St. Brigid's"},
+      {id:"market",x:455,y:270,icon:"⚖",label:"Market Cross",sub:"Village centre"},
+      {id:"tavern",x:625,y:385,icon:"♨",label:"Fox & Lantern",sub:"Village tavern"},
+      {id:"abbey",x:445,y:105,icon:"✟",label:"Abbey",sub:"St. Cuthbert's"},
+      {id:"keep",x:770,y:125,icon:"♜",label:"The Keep",sub:"Lord's residence"}
+    ];
+    const paths=nodes.map(n=>{
+      const locked=n.id==="keep"&&!state.flags.keepUnlocked&&state.role!=="courier";
+      return `<g class="map-node ${state.location===n.id?"is-current":""} ${locked?"is-locked":""}" data-map-place="${n.id}" role="button" tabindex="${locked?-1:0}" aria-label="${n.label}${locked?", locked":""}" aria-disabled="${locked}">
+        <circle class="map-node-halo" cx="${n.x}" cy="${n.y}" r="34"/>
+        <circle class="map-node-disc" cx="${n.x}" cy="${n.y}" r="25"/>
+        <text class="map-node-icon" x="${n.x}" y="${n.y+7}" text-anchor="middle">${n.icon}</text>
+        <text class="map-node-label" x="${n.x}" y="${n.y+49}" text-anchor="middle">${n.label}</text>
+        <text class="map-node-sub" x="${n.x}" y="${n.y+64}" text-anchor="middle">${locked?"Requires an invitation":n.sub}</text>
+      </g>`;
+    }).join("");
+    const map=`<div class="map-intro"><span>✦ ASHENFORD · 1348</span><p>Choose a marked place to travel. The gold ring shows where you are now.</p></div>
+      <div class="illustrated-map-wrap"><svg class="illustrated-map" viewBox="0 0 900 520" role="group" aria-label="Illustrated map of Ashenford village">
+        <defs>
+          <pattern id="map-grain" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="4" cy="5" r="1" fill="#6f684e" opacity=".18"/><circle cx="17" cy="16" r=".8" fill="#6f684e" opacity=".15"/></pattern>
+          <linearGradient id="map-paper" x2="0" y2="1"><stop stop-color="#e7d9b9"/><stop offset="1" stop-color="#cdb98f"/></linearGradient>
+        </defs>
+        <rect width="900" height="520" rx="10" fill="url(#map-paper)"/><rect width="900" height="520" rx="10" fill="url(#map-grain)"/>
+        <path class="map-river" d="M-20 425 C130 350 175 455 295 405 S485 340 570 400 S760 480 930 390"/>
+        <path class="map-road" d="M80 245 C185 220 265 270 360 270 S540 275 650 385 M455 270 C440 210 430 160 445 105 M455 270 C565 210 665 160 770 125 M455 270 C370 300 320 335 285 365 M455 270 C330 220 205 220 120 245"/>
+        <path class="map-road-edge" d="M80 245 C185 220 265 270 360 270 S540 275 650 385 M455 270 C440 210 430 160 445 105 M455 270 C565 210 665 160 770 125 M455 270 C370 300 320 335 285 365 M455 270 C330 220 205 220 120 245"/>
+        <g class="map-woods" opacity=".75"><path d="M35 70l18 36 18-36 18 36 18-36M690 275l18 36 18-36 18 36 18-36M115 440l18 36 18-36 18 36 18-36" fill="none" stroke="#718065" stroke-width="8" stroke-linecap="round"/></g>
+        <g class="map-decoration"><text x="34" y="36">N</text><path d="M42 45l-9 19h18z" /><text x="34" y="500">ASHENFORD COMMON</text><text x="720" y="495">THE RIVER ALD</text></g>
+        <g class="map-buildings"><path d="M392 60l53-37 53 37v32H392z"/><path d="M720 80l50-34 50 34v34H720z"/><path d="M245 330l40-30 40 30v26h-80z"/><path d="M585 350l40-30 40 30v26h-80z"/><path d="M80 220l40-28 40 28v24H80z"/></g>
+        ${paths}
+      </svg></div><div class="map-legend"><span><i class="legend-current"></i> Your location</span><span><i class="legend-road"></i> Village roads</span><span><i class="legend-locked"></i> Restricted</span></div>`;
+    openModal("Village map",map,"FIND YOUR WAY");
+    const selectNode=(el)=>{if(!el||el.classList.contains("is-locked"))return;const id=el.dataset.mapPlace;closeModal();travel(id);};
+    $$(".map-node").forEach(el=>{
+      el.addEventListener("click",()=>selectNode(el));
+      el.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();selectNode(el);}});
+    });
   }
   function openSettings(){
-    openModal("Chronicle settings",`<div class="setting-row"><span>Autosave</span><strong>ON · This device</strong></div><div class="setting-row"><span>Current chapter</span><strong>${escapeHtml(state.chapter)}</strong></div><div class="setting-row"><span>Export your progress</span><button id="modal-export">Download save</button></div><div class="setting-row"><span>Start a new chronicle</span><button id="reset-save">Reset game</button></div><p style="font:italic 11px/1.5 Georgia;color:#69583d;margin-top:15px">This build stores progress in this browser. Export a save file before clearing browser data or moving to another device. Live AI and online account sync are not connected in this prototype.</p>`,"SETTINGS");
+    openModal("Chronicle settings",`<div class="setting-row"><span>Autosave</span><strong>ON · This device</strong></div><div class="setting-row"><span>Current chapter</span><strong>${escapeHtml(state.chapter)}</strong></div><div class="setting-row"><span>Export your progress</span><button id="modal-export">Download save</button></div><div class="setting-row"><span>Start a new chronicle</span><button id="reset-save">Reset game</button></div><p style="font:italic 11px/1.5 Georgia;color:#69583d;margin-top:15px">This build stores progress in this browser. Export a save file before clearing browser data or moving to another device. NOXEN Studio powers character dialogue when available. Progress is saved in this browser; export a save before changing devices.</p>`,"SETTINGS");
     $("#modal-export").addEventListener("click",exportSave);
     $("#reset-save").addEventListener("click",()=>{if(confirm("Begin a new chronicle? Your current local save will be replaced. Export it first if you wish to keep it.")){localStorage.removeItem(SAVE_KEY);state=defaultState();activePerson=null;closeModal();selectedRole="traveller";$("#start-overlay").classList.remove("hidden");$$(".role-option").forEach(b=>b.classList.toggle("selected",b.dataset.role==="traveller"));render();}});
   }
@@ -278,7 +381,7 @@
     $("#begin-game").addEventListener("click",begin);$("#continue-game").addEventListener("click",resume);
     $$(".role-option").forEach(b=>b.addEventListener("click",()=>{selectedRole=b.dataset.role;$$(".role-option").forEach(x=>x.classList.toggle("selected",x===b));}));
     $("#close-dialogue").addEventListener("click",closeDialogue);$("#dialogue-overlay").addEventListener("click",e=>{if(e.target===$("#dialogue-overlay"))closeDialogue();});
-    $("#speech-form").addEventListener("submit",e=>{e.preventDefault();const input=$("#speech-input"),value=input.value;input.value="";reactToFreeText(value);});
+    $("#speech-form").addEventListener("submit",e=>{e.preventDefault();const input=$("#speech-input"),value=input.value;input.value="";handlePlayerSpeech(value);});
     $("#scene-hotspots").addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(b)sceneAction(b.dataset.action);});
     $("#map-toggle").addEventListener("click",openMap);$("#wait-button").addEventListener("click",()=>{changeTime(60);addTimeline("You let an hour pass in Ashenford.");addEvent("The day continues, indifferent to the worries of its people.");render();save(true);});
     $("#all-people-button").addEventListener("click",openPeople);$("#journal-button").addEventListener("click",openJournal);$("#close-modal").addEventListener("click",closeModal);$("#modal-overlay").addEventListener("click",e=>{if(e.target===$("#modal-overlay"))closeModal();});
