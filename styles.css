@@ -165,3 +165,32 @@ html,body{overflow-x:hidden;overflow-y:auto}
   .modal-window{max-height:calc(100dvh - 16px);width:100%}
 }
 @media(prefers-reduced-motion:reduce){.council-action,.council-sign-button{transition:none}}
+
+/* Rumours, leverage and the royal summons. */
+.rumour-event .event-time{color:#d2a66e}
+.rumour-event .event-copy{color:#ead6b2}
+.rumour-event .event-copy small{color:#c3a980;font-size:8px;letter-spacing:.5px}
+.royal-summons-event{padding:7px 8px;border:1px solid #a77a4c;background:#432d25}
+.royal-summons-event .event-time{color:#edbc83}
+.royal-summons-event .event-copy{color:#f0ddc6}
+.council-meters{grid-template-columns:repeat(4,minmax(0,1fr))}
+.suspicion-meter{border-color:#98604c;background:linear-gradient(145deg,#382720,#2b201b)}
+.suspicion-meter em{background:linear-gradient(90deg,#8a4a3b,#d49a69)}
+.rumour-record{background:#eee1c8;border-left:3px solid #a17a50}
+.rumour-record .council-record-mark{font:700 15px Georgia;color:#97694a}
+.rumour-record strong{font-size:13px}
+.rumour-record p{line-height:1.5}
+.rumour-record small{display:block;margin-top:4px}
+.rumour-record.rumour-refuted{opacity:.72;border-left-color:#718064;background:#e3e3cc}
+.rumour-refute-button{margin-top:8px;padding:7px 9px;border:1px solid #8e7047;background:#4b3b27;color:#f0dfbd;font-size:8px;letter-spacing:.5px;cursor:pointer}
+.rumour-refute-button:hover:not(:disabled){background:#6b5232}
+.rumour-refute-button:disabled{opacity:.5;cursor:not-allowed}
+.royal-warning{border-color:#a66f51;background:#3b2821}
+.royal-warning>span{color:#e4ad83}
+.sentence-ending{padding:22px;background:linear-gradient(145deg,#eadfc5,#d8c7a2);border:1px solid #9e7c4f;color:#392d1e}
+.sentence-ending h3{font:600 29px var(--book);margin:8px 0 14px}
+.sentence-ending p{font:italic 13px/1.7 var(--book);color:#5e4c34}
+.sentence-new-button{margin-top:10px;padding:12px 16px;border:1px solid #b08d58;background:#4a3926;color:#f0dfbd;font-size:9px;letter-spacing:1px;text-transform:uppercase;cursor:pointer}
+.sentence-new-button:hover{background:#675132}
+@media(max-width:900px){.council-meters{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.council-meters{grid-template-columns:1fr}}
