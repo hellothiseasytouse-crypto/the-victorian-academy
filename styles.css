@@ -96,3 +96,72 @@
 .npc-regard-title{font:600 15px var(--book);color:#f0e2c2}
 .npc-regard-copy{font:italic 10px/1.45 var(--book);color:#c8b895}
 @media(max-width:640px){.inhabitant-copy small{max-width:210px}.scene-description{line-height:1.55}}
+
+/* Desktop and laptop scrolling: the page and each long panel have a real scroll container. */
+html{scrollbar-gutter:stable;scrollbar-width:thin;scrollbar-color:#927044 #241f18}
+html::-webkit-scrollbar,body::-webkit-scrollbar,.modal-content::-webkit-scrollbar{width:13px}
+html::-webkit-scrollbar-track,body::-webkit-scrollbar-track,.modal-content::-webkit-scrollbar-track{background:linear-gradient(90deg,#201b15,#3a3022 48%,#201b15);border-left:1px solid #76603e}
+html::-webkit-scrollbar-thumb,body::-webkit-scrollbar-thumb,.modal-content::-webkit-scrollbar-thumb{background:linear-gradient(90deg,#76552f,#bd985d 48%,#76552f);border:2px solid #33291d;border-radius:3px}
+html::-webkit-scrollbar-thumb:hover,body::-webkit-scrollbar-thumb:hover,.modal-content::-webkit-scrollbar-thumb:hover{background:linear-gradient(90deg,#573d20,#d0aa6c 48%,#573d20)}
+html,body{overflow-x:hidden;overflow-y:auto}
+.app-shell{min-height:100vh;height:auto}
+.game-layout{align-items:start}
+.modal-overlay{align-items:flex-start;overflow-x:hidden;overflow-y:auto;padding:20px}
+.modal-window{display:flex;flex-direction:column;min-height:0;max-height:calc(100dvh - 40px);height:auto;margin:auto;overflow:hidden}
+.modal-heading{flex:0 0 auto}
+.modal-content{flex:1 1 auto;min-height:0;max-height:none;overflow-x:hidden;overflow-y:auto;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:#927044 #e1d1ad}
+.dialogue-overlay{align-items:center;overflow-x:hidden;overflow-y:auto}
+.dialogue-window{height:min(760px,calc(100dvh - 40px));max-height:calc(100dvh - 40px);margin:auto;overflow:hidden}
+.dialogue-body{min-height:0;max-height:none}
+.conversation-log{min-height:0;height:0;overflow-y:auto;overscroll-behavior-y:contain;touch-action:pan-y}
+
+/* Town & Crown: petitions, testimony and constitutional crisis. */
+.council-intro{padding:16px 17px;background:linear-gradient(135deg,#e8dcc0,#d7c39b);border:1px solid #a68a5d;color:#362b1d}
+.council-intro h3{font:600 27px var(--book);margin:5px 0 8px}
+.council-intro p{font:italic 12px/1.6 var(--book);margin:0;color:#68583e}
+.council-status{display:inline-block;margin-top:12px;padding:6px 9px;border:1px solid #a68a5d;background:#fff8e7;color:#765a31;font-size:8px;letter-spacing:1px;text-transform:uppercase}
+.council-meters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:12px 0}
+.council-meter{padding:11px;background:#322a20;color:#e7d9bd;border:1px solid #8e7047}
+.council-meter>div{display:flex;justify-content:space-between;gap:6px;font-size:8px;letter-spacing:1px;color:#c8b58f}
+.council-meter b{font-size:10px;color:#f0d9a9}
+.council-meter i{display:block;height:5px;margin-top:9px;background:#17130e;border:1px solid #76603d}
+.council-meter em{display:block;height:100%;background:linear-gradient(90deg,#82603b,#d0ad70)}
+.council-section{margin-top:16px;padding-top:12px;border-top:1px solid #8d744d66}
+.council-section-heading{display:flex;align-items:end;justify-content:space-between;gap:10px;margin-bottom:9px}
+.council-section-heading>div>span{font-size:7px;letter-spacing:1.5px;color:#8e7145}
+.council-section-heading h3{font:600 20px var(--book);margin:3px 0 0;color:#33291d}
+.council-section-heading>small{font-size:8px;color:#806b4b;text-align:right}
+.council-action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.council-action{display:flex;flex-direction:column;align-items:flex-start;gap:5px;min-height:93px;padding:11px;border:1px solid #8e704866;background:#f3e8ce;color:#392e20;text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
+.council-action:hover:not(:disabled){background:#dfc99b;border-color:#8b6c3d}
+.council-action strong{font:600 15px var(--book)}
+.council-action span{font:italic 10px/1.4 var(--book);color:#66543a}
+.council-action small{margin-top:auto;font-size:7px;letter-spacing:.7px;color:#896e43}
+.council-action:disabled{opacity:.58;cursor:not-allowed;background:#d8c9a8}
+.council-signers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.council-signer{display:flex;align-items:center;gap:8px;min-width:0;padding:8px;border:1px solid #8e704744;background:#eee2c6}
+.council-signer-icon{width:28px;height:30px;flex:none;display:grid;place-items:center;background:#3c3327;color:#e1c58e;border:1px solid #a78a59}
+.council-signer-copy{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.council-signer-copy strong{font:600 12px var(--book);color:#3e3020}
+.council-signer-copy small{font-size:7px;line-height:1.25;color:#806b4b}
+.council-sign-button{border:1px solid #92754b;background:#4b3b25;color:#f0dfbd;padding:6px 8px;font-size:8px;cursor:pointer}
+.council-sign-button:disabled{background:#d3c5a7;color:#79694d;cursor:not-allowed}
+.council-note,.council-empty{font:italic 11px/1.55 var(--book);color:#68563b;margin:9px 0 0}
+.council-record{display:flex;gap:10px;padding:11px 10px;margin:7px 0;border:1px solid #9e835633;background:#f0e5ca}
+.council-record-mark{width:26px;height:26px;flex:none;display:grid;place-items:center;border:1px solid #a4895b;color:#86683c}
+.council-record strong{font:600 14px var(--book);color:#392d1e}
+.council-record p{font:italic 10px/1.45 var(--book);color:#66543a;margin:4px 0}
+.council-record small{font-size:7px;letter-spacing:.6px;color:#91764c}
+.grievance-record{background:#e8dbc0}
+.council-settlement{margin:12px 0;padding:13px 15px;border:1px solid #8c7046;background:#332b20;color:#e9dabb}
+.council-settlement>span{font-size:8px;letter-spacing:1.4px;color:#d1ae70}
+.council-settlement p{font:italic 12px/1.55 var(--book);margin:7px 0 0}
+.council-king-response{margin:10px 0 0;padding:11px 13px;border-left:3px solid #927044;background:#e5d8bb;color:#56452e;font:italic 11px/1.55 var(--book)}
+@media(max-width:760px){
+  .council-meters{grid-template-columns:1fr}
+  .council-meter{padding:8px 10px}
+  .council-action-grid,.council-signers{grid-template-columns:1fr}
+  .modal-overlay{padding:8px}
+  .modal-window{max-height:calc(100dvh - 16px);width:100%}
+}
+@media(prefers-reduced-motion:reduce){.council-action,.council-sign-button{transition:none}}
