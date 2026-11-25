@@ -81,3 +81,14 @@ The system makes coercion a risky social choice: short-term compliance can cost 
 ## Open-source direction
 
 The application code and original game data are released under the MIT licence. Any language model weights or services integrated later will retain their own licences and terms; an open-weight model is not automatically free to host or unrestricted for every use.
+## Bell quest progression repair
+
+The bell mystery begins with Margaret, then advances through Edmund and Rowan. Each character can advance the relevant clue through either a dialogue choice or a typed conversation, including when NOXEN Studio supplies the spoken reply. The tower investigation unlocks only after all three accounts, and the quest is marked resolved after the final conversation with Anselm. Existing version-1 saves retain their current progress.
+
+## Time, suspicion and household life
+
+- Repeatedly passing hours without doing anything draws attention. Residents first question the player behaviour, then a witchcraft rumour may spread and the watch can report it to the Crown.
+- A royal summons can be answered with two credible residents willing to act as witnesses. Failure to answer leads to banishment from Ashenford, recorded without graphic violence.
+- Residents have distinct social positions: the king, steward, royal officer, clergy, tradespeople and working households. Abdication transfers authority to a temporary council; regency keeps the king but shares power.
+- The player can rent a room at the inn, request a peaceful stay from a trusted resident, or attempt an unauthorised entry through a simple game chance. A household may report trespass to Serjeant Hobb; the player must answer the complaint and may pay a fine or face restrictions.
+- Lodging, reports, fines, coin, suspicion and the government form are saved locally and migrated into existing version-1 chronicles.
