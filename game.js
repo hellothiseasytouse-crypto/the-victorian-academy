@@ -6,10 +6,10 @@
   const clamp = (n) => Math.max(0, Math.min(100, n));
   const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const roles = {
-    traveller:{name:"Wayfarer",intro:"You have come to Ashenford with little more than a weatherworn cloak and a stranger's name."},
-    apprentice:{name:"Healer's apprentice",intro:"Your training has brought you to Ashenford. The scent of rosemary follows your satchel."},
-    merchant:{name:"Merchant's kin",intro:"A family token and a keen eye for bargains mark you as kin to a trading household."},
-    courier:{name:"Royal courier",intro:"A sealed letter rests inside your coat. Its destination is the keep above the village."}
+    traveller:{name:"Wayfarer",station:"A stranger with no known household rank or local allegiance.",intro:"You have come to Ashenford with little more than a weatherworn cloak and a stranger's name."},
+    apprentice:{name:"Healer's apprentice",station:"A healer's apprentice: useful in the infirmary, but still learning and not a master physician.",intro:"Your training has brought you to Ashenford. The scent of rosemary follows your satchel."},
+    merchant:{name:"Merchant's kin",station:"A member of a trading household, expected to understand bargains, promises, and fair measures.",intro:"A family token and a keen eye for bargains mark you as kin to a trading household."},
+    courier:{name:"Royal courier",station:"A bearer of royal dispatches, entitled to formal courtesy but still answerable for the letter entrusted to you.",intro:"A sealed letter rests inside your coat. Its destination is the keep above the village."}
   };
   const places = {
     market:{name:"The Market Cross",short:"Market",icon:"⚖",eyebrow:"THE SETTLEMENT OF ASHENFORD",desc:"A damp morning settles over the village. Traders raise their awnings beneath the watchful shadow of the abbey bell.",weather:"MIST ON THE COBBLES",scene:"market"},
@@ -53,10 +53,21 @@
   }
   function ps(id){return state.npc[id];}
   function remember(id,text){const p=ps(id);p.memories.unshift(text);p.memories=p.memories.slice(0,5);}
+  function relationshipFor(id){
+    const e=ps(id).emotions,trust=e.trust||0,fear=e.fear||0,anger=e.anger||0;
+    if(fear>=72)return {title:"Frightened of you",summary:"They keep their distance and watch your actions carefully.",trust};
+    if(anger>=72)return {title:"Deeply offended",summary:"A serious grievance stands between you; patience and amends are needed.",trust};
+    if(trust>=88)return {title:"Steadfast ally",summary:"They would stand beside you when the village grows difficult.",trust};
+    if(trust>=72)return {title:"Trusted confidant",summary:"They share concerns they would keep from a stranger.",trust};
+    if(trust>=55)return {title:"Esteemed friend",summary:"Your words carry weight, and goodwill has taken root.",trust};
+    if(trust>=38)return {title:"Familiar face",summary:"They recognise you and remember the good you have done.",trust};
+    if(fear>=45)return {title:"Wary of you",summary:"They remain guarded until your actions give them reason to relax.",trust};
+    if(anger>=35)return {title:"Irritated",summary:"Your last dealings have left them displeased.",trust};
+    return {title:ps(id).met?"Cautious acquaintance":"Unknown",summary:ps(id).met?"You are known to one another, but trust must still be earned.":"You have not yet made their acquaintance.",trust};
+  }
   function adjust(id,delta){
     const e=ps(id).emotions;Object.entries(delta).forEach(([k,v])=>{if(k in e)e[k]=clamp(e[k]+v);});
-    const trust=e.trust, fear=e.fear, anger=e.anger;
-    ps(id).opinion=trust>72?"Trusted friend":fear>68?"Frightened of you":anger>65?"Deeply offended":trust>48?"Friendly":fear>45?"Wary":anger>35?"Irritated": "Cautious stranger";
+    ps(id).opinion=relationshipFor(id).title;
   }
   function activeAt(id){
     const p=people[id],h=Math.floor(state.minute/60);
@@ -150,12 +161,15 @@ function renderGuide(){
   }
   function openDialogue(id){
     activePerson=id;const p=people[id],s=ps(id);s.met=true;remember(id,"You met the traveller at "+places[state.location].short+".");
-    $("#dialogue-role").textContent=p.role.toUpperCase();$("#dialogue-name").textContent=p.name;$("#dialogue-status").textContent=s.opinion==="Unknown"?"They regard you with cautious interest.":s.opinion+".";$("#character-profile").innerHTML=`<div class="portrait-large">${p.icon}</div><div class="profile-name">${p.name}</div><div class="profile-role">${p.role}</div><p class="profile-lore">${p.lore}</p><div class="profile-connections"><strong>KNOWN CONNECTIONS</strong><span>${p.connections}</span></div>`;
+    $("#dialogue-role").textContent=p.role.toUpperCase();$("#dialogue-name").textContent=p.name;const regard=relationshipFor(id);$("#dialogue-status").textContent=regard.summary;$("#character-profile").innerHTML=`<div class="portrait-large">${p.icon}</div><div class="profile-name">${p.name}</div><div class="profile-role">${p.role}</div><p class="profile-lore">${p.lore}</p><div class="profile-connections"><strong>KNOWN CONNECTIONS</strong><span>${p.connections}</span></div><div class="npc-regard-card"><span class="npc-regard-kicker">YOUR STANDING</span><strong class="npc-regard-title">${regard.title}</strong><div class="npc-regard-meter"><span style="width:${regard.trust}%"></span></div><small class="npc-regard-copy">${regard.summary}</small></div>`;
     const log=state.dialogueLog[id]||[];if(!log.length)log.push({who:p.name,text:p.greeting});state.dialogueLog[id]=log;renderDialogue();$("#dialogue-overlay").classList.remove("hidden");renderPeople();save();
   }
   const emotionColors={fear:"#a84f45",concern:"#c79742",anger:"#c56d3c",trust:"#66835d",curiosity:"#6488a9"};
   function renderDialogue(){
-    const s=ps(activePerson),p=people[activePerson],em=s.emotions;
+    const s=ps(activePerson),p=people[activePerson],em=s.emotions,regard=relationshipFor(activePerson);
+    $("#dialogue-status").textContent=regard.summary;
+    const regardTitle=$("#character-profile .npc-regard-title"),regardCopy=$("#character-profile .npc-regard-copy"),regardMeter=$("#character-profile .npc-regard-meter span");
+    if(regardTitle)regardTitle.textContent=regard.title;if(regardCopy)regardCopy.textContent=regard.summary;if(regardMeter)regardMeter.style.width=regard.trust+"%";
     $("#emotion-strip").innerHTML=Object.entries(em).map(([k,v])=>`<div class="emotion-mini"><div class="emotion-mini-label"><span>${k[0].toUpperCase()+k.slice(1)}</span><span>${v}</span></div><div class="emotion-mini-track"><span style="width:${v}%;background:${emotionColors[k]}"></span></div></div>`).join("");
     $("#conversation-log").innerHTML=(state.dialogueLog[activePerson]||[]).map(line=>`<div class="speech-line ${line.who==="You"?"player":""} ${line.pending?"is-pending":""}"><span class="speech-speaker">${escapeHtml(line.pending?"THEY ARE THINKING":line.who.toUpperCase())}</span><p>${escapeHtml(line.text)}</p></div>`).join("");const conversationLog=$("#conversation-log");conversationLog.scrollTop=conversationLog.scrollHeight;
     $("#conversation-options").innerHTML=optionsFor(activePerson).map((o,i)=>`<button class="choice-button" data-choice="${i}">${escapeHtml(o.label)}</button>`).join("");
@@ -238,8 +252,12 @@ async function askNoxenStudio(text,personId){
       "Write the next in-character NPC line for a medieval roleplaying game set in fictional Ashenford, 1348.",
       "Character: "+p.name+", "+p.role+". Personality: "+p.lore+" Connections: "+p.connections,
       "Use natural, readable medieval-leaning English. Reply in 1–3 short sentences. Stay in character; do not narrate the player's actions.",
+      "This is a medieval setting in 1348, not the Victorian period. Keep manners, titles, hierarchy, and daily customs appropriate to medieval Ashenford.",
+      "Player's station: "+(roles[state.role]?.station||state.roleName)+". Let this role affect relevant etiquette and what the NPC expects, but never assume personality, ability, worth, or treatment from gender.",
+      "Build only non-romantic bonds: cautiousness, respect, friendship, trust, gratitude, loyalty, and protective alliance. Do not flirt, court, seduce, or portray an NPC as falling in love with the player.",
+      "Trust must be earned through consistent choices and remembered actions. Do not grant large trust increases for a single compliment; keep each reaction faithful to the NPC's age, personality, memories, emotions, and social position.",
       "Knowledge is limited to medieval life. Modern technology and slang are unfamiliar; react with believable confusion. Do not invent quest completion or contradict facts. No real-world medical advice.",
-      "Emotions: "+JSON.stringify(saved.emotions)+". Memories: "+memory,
+      "Relationship: "+JSON.stringify(relationshipFor(personId))+". Emotions: "+JSON.stringify(saved.emotions)+". Memories: "+memory,
       "Place: "+places[state.location].name+". Time: Day "+state.day+" "+timeLabel()+". Player: "+state.roleName+". Quest: "+q.name+" — "+q.desc,
       "Return ONLY JSON: {\"reply\":\"...\",\"emotion_delta\":{},\"memory\":\"\"}. emotion_delta may contain fear, concern, anger, trust, curiosity integers from -6 to 6.",
       "Player says: "+text.slice(0,200)
