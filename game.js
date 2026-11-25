@@ -20,17 +20,27 @@
     keep:{name:"Ashenford Keep",short:"Keep",icon:"♜",eyebrow:"THE LORD'S KEEP",desc:"A small fortress overlooks the settlement. Servants hurry through the courtyard beneath the lord's banner.",weather:"FLAGS IN THE WIND",scene:"keep"}
   };
   const people = {
-    edmund:{id:"edmund",name:"Edmund Blackthorn",role:"Plague physician",icon:"⚕",age:46,location:"infirmary",lore:"A severe physician with a guarded heart. He trusts evidence, routine, and very few people.",connections:"Margaret supplies his herbs. Brother Anselm sometimes brings him food for the sick.",greeting:"Hold there. The infirmary is no place for idle curiosity. Tell me, traveller, what dost thou seek?",emotions:{fear:12,concern:48,anger:18,trust:16,curiosity:54},voice:"formal"},
-    margaret:{id:"margaret",name:"Margaret Whitmore",role:"Merchant",icon:"⚖",age:39,location:"market",lore:"A quick-witted trader who remembers every debt, promise, and face that passes her stall.",connections:"Rowan keeps her parcels at the tavern. Edmund is one of her oldest customers.",greeting:"Ah, a new face. If thou hast coin, I have wares; if thou hast gossip, I may have time.",emotions:{fear:8,concern:26,anger:12,trust:30,curiosity:68},voice:"sharp"},
-    rowan:{id:"rowan",name:"Rowan Pike",role:"Innkeeper",icon:"♨",age:52,location:"tavern",lore:"A patient listener who has heard more secrets than he admits. He remembers what is said after the second cup.",connections:"Margaret trusts him with parcels. Mara's brother once worked in his stables.",greeting:"Come in from the wet, friend. There is broth by the hearth and a tale in every corner.",emotions:{fear:10,concern:35,anger:8,trust:36,curiosity:45},voice:"warm"},
-    anselm:{id:"anselm",name:"Brother Anselm",role:"Abbey novice",icon:"✟",age:24,location:"abbey",lore:"A quiet novice whose hands are more accustomed to carrying supplies than copying scripture.",connections:"He brings provisions to Edmund's patients. Rowan has seen him near the north road.",greeting:"Peace be with thee. The abbey welcomes a respectful guest, though these are troubled days.",emotions:{fear:42,concern:58,anger:4,trust:20,curiosity:34},voice:"gentle"},
-    mara:{id:"mara",name:"Mara Fenwick",role:"Washerwoman",icon:"✺",age:31,location:"gate",lore:"Practical, observant, and fiercely loyal to her missing cousin Will.",connections:"Rowan employed Will in the stables. Serjeant Hobb questioned him last week.",greeting:"If thou hast seen a young man upon the northern road, speak plainly. I have little patience for riddles.",emotions:{fear:30,concern:78,anger:25,trust:24,curiosity:40},voice:"direct"},
-    hobb:{id:"hobb",name:"Serjeant Hobb",role:"Gate serjeant",icon:"⚔",age:44,location:"gate",lore:"A disciplined guard who follows orders, watches strangers, and dislikes disturbances at the gate.",connections:"He reports to Steward Alwyn and has a long-standing quarrel with Rowan.",greeting:"Halt. State thy business within Ashenford. I keep the road, and I keep account of those who pass.",emotions:{fear:8,concern:22,anger:26,trust:15,curiosity:19},voice:"stern"},
-    alwyn:{id:"alwyn",name:"Steward Alwyn",role:"Keeper of accounts",icon:"▤",age:57,location:"keep",lore:"The steward controls the keep's stores and knows the value of every sack of grain.",connections:"He serves King Aldric and quietly relies on Margaret's market reports.",greeting:"The keep receives petitioners by appointment. What matter brings thee before the steward?",emotions:{fear:4,concern:19,anger:22,trust:12,curiosity:35},voice:"measured"},
-    aldric:{id:"aldric",name:"King Aldric III",role:"Lord of Ashenford",icon:"♜",age:49,location:"keep",lore:"A proud ruler facing pressure from the road, the abbey, and the village households.",connections:"Steward Alwyn manages his stores. He has heard reports of the strange bell.",greeting:"Thou standest before Aldric of Ashenford. Speak with care; my time is not without price.",emotions:{fear:2,concern:42,anger:17,trust:8,curiosity:28},voice:"royal"}
+    edmund:{id:"edmund",name:"Edmund Blackthorn",role:"Plague physician",icon:"⚕",age:46,location:"infirmary",lore:"A severe physician with a guarded heart. He trusts evidence, routine, and very few people.",connections:"Margaret supplies his herbs. Brother Anselm sometimes brings him food for the sick.",greeting:"Mind the doorway, please. We have patients sleeping inside. Are you here for treatment, or have you brought news?",emotions:{fear:12,concern:48,anger:18,trust:16,curiosity:54},voice:"formal"},
+    margaret:{id:"margaret",name:"Margaret Whitmore",role:"Merchant",icon:"⚖",age:39,location:"market",lore:"A quick-witted trader who remembers every debt, promise, and face that passes her stall.",connections:"Rowan keeps her parcels at the tavern. Edmund is one of her oldest customers.",greeting:"Morning. If you're buying, come closer. If you're only looking, mind the baskets; I have enough to count already.",emotions:{fear:8,concern:26,anger:12,trust:30,curiosity:68},voice:"sharp"},
+    rowan:{id:"rowan",name:"Rowan Pike",role:"Innkeeper",icon:"♨",age:52,location:"tavern",lore:"A patient listener who has heard more secrets than he admits. He remembers what is said after the second cup.",connections:"Margaret trusts him with parcels. Mara's brother once worked in his stables.",greeting:"Shut the door behind you, will you? The fire's barely keeping up with this damp. Need a room, a meal, or something else?",emotions:{fear:10,concern:35,anger:8,trust:36,curiosity:45},voice:"warm"},
+    anselm:{id:"anselm",name:"Brother Anselm",role:"Abbey novice",icon:"✟",age:24,location:"abbey",lore:"A quiet novice whose hands are more accustomed to carrying supplies than copying scripture.",connections:"He brings provisions to Edmund's patients. Rowan has seen him near the north road.",greeting:"I'm meant to be taking these supplies to the infirmary. Are you looking for the prior, or someone else?",emotions:{fear:42,concern:58,anger:4,trust:20,curiosity:34},voice:"gentle"},
+    mara:{id:"mara",name:"Mara Fenwick",role:"Washerwoman",icon:"✺",age:31,location:"gate",lore:"Practical, observant, and fiercely loyal to her missing cousin Will.",connections:"Rowan employed Will in the stables. Serjeant Hobb questioned him last week.",greeting:"Have you come from the north road? I'm looking for my cousin. His name is Will. Please, tell me if you've seen him.",emotions:{fear:30,concern:78,anger:25,trust:24,curiosity:40},voice:"direct"},
+    hobb:{id:"hobb",name:"Serjeant Hobb",role:"Gate serjeant",icon:"⚔",age:44,location:"gate",lore:"A disciplined guard who follows orders, watches strangers, and dislikes disturbances at the gate.",connections:"He reports to Steward Alwyn and has a long-standing quarrel with Rowan.",greeting:"Stop there. Name and business, please. The road has been unsafe after dark, and I need to know who comes through.",emotions:{fear:8,concern:22,anger:26,trust:15,curiosity:19},voice:"stern"},
+    alwyn:{id:"alwyn",name:"Steward Alwyn",role:"Keeper of accounts",icon:"▤",age:57,location:"keep",lore:"The steward controls the keep's stores and knows the value of every sack of grain.",connections:"He serves King Aldric and quietly relies on Margaret's market reports.",greeting:"I'm in the middle of the stores account. What matter have you brought, and can it wait until I've finished this line?",emotions:{fear:4,concern:19,anger:22,trust:12,curiosity:35},voice:"measured"},
+    aldric:{id:"aldric",name:"King Aldric III",role:"Lord of Ashenford",icon:"♜",age:49,location:"keep",lore:"A proud ruler facing pressure from the road, the abbey, and the village households.",connections:"Steward Alwyn manages his stores. He has heard reports of the strange bell.",greeting:"You have a moment. Make your business clear; I have reports waiting from the road and the storehouse.",emotions:{fear:2,concern:42,anger:17,trust:8,curiosity:28},voice:"royal"}
+  };
+  const npcProfiles={
+    edmund:{manner:"He keeps his sleeves rolled, washes his hands often, and speaks in short, exact sentences. He is tired, observant and impatient with careless claims.",concern:"He has too many patients and too little clean linen. He is afraid that people will mistake confidence for knowledge.",knowledge:"He knows what he has personally seen in the infirmary and what Margaret supplies. He does not know the abbey's private business unless someone told him."},
+    margaret:{manner:"She is quick with figures and notices small changes in people's stories. She can be dryly funny, but does not waste time flattering customers.",concern:"She is protecting her stock and reputation while trade becomes uncertain. She dislikes unpaid debts and vague promises.",knowledge:"She knows market prices, customers, deliveries and gossip she has heard directly. She distinguishes what she witnessed from what someone merely told her."},
+    rowan:{manner:"He is slow to interrupt, often answers while doing another task, and uses plain words. He has a dry sense of humour and dislikes being pressed in front of customers.",concern:"He wants the inn to stay open and his regulars to keep trusting him. He avoids taking sides in quarrels that could cost him trade.",knowledge:"He knows what happened in the tavern, stable yard and nearby roads from guests. He does not know private matters unless someone confided in him."},
+    anselm:{manner:"He is young, conscientious and easily flustered when questioned about things he would rather keep private. He pauses before answering and rarely makes a grand speech.",concern:"He worries about the people receiving food and about disappointing the abbey. He is not fearless or endlessly patient.",knowledge:"He knows the abbey's ordinary routines and the supplies he carries. He knows only what he personally witnessed about the bell and the road."},
+    mara:{manner:"She watches the road while she speaks. Her answers are direct; worry may make her impatient, but she does not turn every conversation into a speech.",concern:"She wants news of her cousin Will and needs to keep earning a living. Empty reassurance makes her more frustrated, not more grateful.",knowledge:"She knows Will, his habits and the places he used to visit. She cannot identify clues she has not seen."},
+    hobb:{manner:"He is formal on duty, alert to evasions, and more interested in clear answers than charming words. He does not trust strangers simply because they are polite.",concern:"He is responsible for the gate and fears being blamed if he lets trouble into the village.",knowledge:"He knows gate records, travellers he has questioned and instructions from the keep. He does not automatically know what happens inside the abbey or tavern."},
+    alwyn:{manner:"He is precise, economical with words and easily distracted by unfinished accounts. He values evidence, proper procedure and people who do what they said they would.",concern:"He is trying to make the stores last without alarming the household or the village.",knowledge:"He knows inventories, deliveries, orders and reports brought to him. He does not know every private conversation in Ashenford."},
+    aldric:{manner:"He is a ruler with limited time, not a theatrical villain. He listens when evidence matters, becomes curt when interrupted, and rarely explains himself at length.",concern:"He is balancing food stores, road safety and the abbey's influence. He worries about disorder spreading faster than the sickness.",knowledge:"He knows official reports and matters brought before his household. Rumours are not facts to him."}
   };
   function defaultState(){
-    const npc={}; for(const p of Object.values(people)) npc[p.id]={met:false,emotions:{...p.emotions},memories:[],opinion:"Unknown"};
+    const npc={}; for(const p of Object.values(people)) npc[p.id]={met:false,meetings:0,firstMetDay:0,lastMetDay:0,lastMetMinute:null,lastMetPlace:"",emotions:{...p.emotions},memories:[],opinion:"Unknown"};
     return {version:1,started:false,role:"traveller",roleName:"Wayfarer",location:"market",day:1,minute:555,chapter:"The Stranger",reputation:"Unknown",inventory:[{id:"travel-cloak",name:"Weatherworn cloak",icon:"🧥",desc:"A sturdy cloak, damp from the road."}],quests:{bell:0,ledger:-1,parcel:-1,will:-1},flags:{sawFibres:false,herbs:false,linen:false,willFound:false,keepUnlocked:false,ending:""},npc,events:["The market is waking beneath a veil of mist.","A bell was heard after midnight, though the abbey says its clapper is removed."],timeline:[],dialogueLog:{},lastSaved:0};
   }
   let state=defaultState(), selectedRole="traveller", activePerson=null, activeTab="world";
@@ -49,7 +59,19 @@
   function addTimeline(text){state.timeline.unshift({day:state.day,time:timeLabel(),text});state.timeline=state.timeline.slice(0,12);save();}
   function addEvent(text){state.events.unshift(text);state.events=state.events.slice(0,5);save();}
   function changeTime(minutes){
-    state.minute+=minutes;while(state.minute>=1440){state.minute-=1440;state.day++;addEvent("Dawn has broken upon another day in Ashenford.");addTimeline("A new day begins in the village.");}
+    const start=(state.day-1)*1440+state.minute;
+    const end=start+Math.max(0,Number(minutes)||0);
+    const oldDay=state.day;
+    state.day=Math.floor(end/1440)+1;
+    state.minute=end%1440;
+    for(let hourMark=Math.floor(start/60)+1;hourMark<=Math.floor(end/60);hourMark++){
+      const hour=hourMark%24,day=Math.floor(hourMark/24)+1;
+      if(hour===6)addEvent("Shutters open along the market street. Carts begin arriving from the farms.");
+      if(hour===12)addEvent("The abbey bell marks noon. Traders pause briefly, and the square grows loud again.");
+      if(hour===18)addEvent("The market stalls are being covered. Unsold food is packed away before the light fades.");
+      if(hour===21)addEvent("The north gate is being closed for the night. Late travellers are asked to wait until morning.");
+      if(hour===0&&day>oldDay){addEvent("Another cold dawn is not far away. The night watch changes at the gate.");addTimeline("Day "+day+" begins in Ashenford.");}
+    }
   }
   function ps(id){return state.npc[id];}
   function remember(id,text){const p=ps(id);p.memories.unshift(text);p.memories=p.memories.slice(0,5);}
@@ -69,17 +91,81 @@
     const e=ps(id).emotions;Object.entries(delta).forEach(([k,v])=>{if(k in e)e[k]=clamp(e[k]+v);});
     ps(id).opinion=relationshipFor(id).title;
   }
+  function dayPart(){
+    const h=Math.floor(state.minute/60);
+    if(h<5)return "late night";if(h<7)return "dawn";if(h<11)return "morning";if(h<14)return "midday";if(h<18)return "afternoon";if(h<21)return "evening";return "night";
+  }
+  function weatherForToday(){
+    const cycle=[
+      {label:"Low mist",detail:"Mist hangs close to the ground and softens the distant roofs."},
+      {label:"Cold drizzle",detail:"A thin drizzle darkens wool, timber and the ruts in the road."},
+      {label:"Broken cloud",detail:"Pale light comes and goes between low clouds."},
+      {label:"Steady rain",detail:"Rain runs from the eaves and gathers in the cart tracks."},
+      {label:"Clear and cold",detail:"The air is sharp, but the rooftops are visible beyond the village."}
+    ];
+    return cycle[(state.day-1)%cycle.length];
+  }
+  function routineFor(id){
+    const h=Math.floor(state.minute/60),day=state.day;
+    switch(id){
+      case "edmund":
+        if(h>=5&&h<12)return {place:"infirmary",activity:"checking patients and preparing remedies",available:true};
+        if(h>=12&&h<13)return {place:"market",activity:"buying linen and herbs for the infirmary",available:true};
+        if(h>=13&&h<21)return {place:"infirmary",activity:h<17?"tending patients":"counting supplies and checking the fever ward",available:true};
+        return {place:"infirmary",activity:"resting between night calls",available:false};
+      case "margaret":
+        if(h>=6&&h<18)return {place:"market",activity:h<9?"setting out her goods":h<16?"weighing goods and keeping her accounts":"covering the stall and counting the day's takings",available:true};
+        if(h>=18&&h<20&&day%2===0)return {place:"tavern",activity:"settling a trade account with Rowan",available:true};
+        return {place:"market",activity:"away from the stall",available:false};
+      case "rowan":
+        if(h>=5&&h<7)return {place:"market",activity:"collecting bread and provisions",available:true};
+        if(h>=7&&h<23)return {place:"tavern",activity:h<11?"laying the fire and preparing the kitchen":h<17?"serving the room and keeping the accounts":"serving supper and listening to the evening talk",available:true};
+        return {place:"tavern",activity:"closing the inn for the night",available:false};
+      case "anselm":
+        if(h>=5&&h<14)return {place:"abbey",activity:h<8?"carrying water and preparing the chapel":"copying notes and moving supplies around the abbey",available:true};
+        if(h>=14&&h<17)return {place:"infirmary",activity:"delivering food and clean cloth to the sick",available:true};
+        if(h>=17&&h<20)return {place:"abbey",activity:"returning supplies and helping with evening prayers",available:true};
+        return {place:"abbey",activity:"at rest in the abbey",available:false};
+      case "mara":
+        if(h>=6&&h<8)return {place:"gate",activity:"checking the northern road for news of Will",available:true};
+        if(h>=8&&h<10)return {place:"market",activity:"collecting washing and speaking with customers",available:true};
+        if(h>=10&&h<17)return {place:"gate",activity:"watching the road between loads of washing",available:true};
+        return {place:"gate",activity:"away at work or searching the road",available:false};
+      case "hobb":
+        if(h>=5&&h<9)return {place:"gate",activity:"checking carts and questioning early travellers",available:true};
+        if(h>=9&&h<11)return {place:"keep",activity:"giving the morning report to the steward",available:true};
+        if(h>=11&&h<21)return {place:"gate",activity:"keeping watch and checking the road",available:true};
+        return {place:"gate",activity:"off duty at the gatehouse",available:false};
+      case "alwyn":
+        if(h>=7&&h<12)return {place:"keep",activity:"checking the stores and the day's accounts",available:true};
+        if(h>=13&&h<18)return {place:"keep",activity:"meeting petitioners and reviewing deliveries",available:true};
+        return {place:"keep",activity:"away from the steward's office",available:false};
+      case "aldric":
+        if(h>=9&&h<12)return {place:"keep",activity:"hearing petitions and receiving reports",available:true};
+        if(h>=14&&h<18)return {place:"keep",activity:"meeting his council and reviewing the village's needs",available:true};
+        return {place:"keep",activity:"not receiving visitors",available:false};
+      default:return {place:people[id]?.location||state.location,activity:"going about their usual work",available:true};
+    }
+  }
+  function ambientForPlace(id){
+    const part=dayPart();
+    const ambience={
+      market:{dawn:"The first carts are arriving; stallholders are lifting damp covers and sorting the morning's goods.",morning:"Buyers move between the stalls, comparing prices and making room for passing carts.",midday:"The square is busiest now. Sellers call out prices over the noise of animals and bargaining.",afternoon:"The crowd is thinning. Stallholders begin putting aside what has not sold.",evening:"Most stalls are covered, and the square is quieter than it was an hour ago.",night:"The shutters are closed. Only the watch and an occasional late cart disturb the square."},
+      infirmary:{dawn:"The room smells of damp straw, boiled linen and yesterday's herbs. The first patients are being checked.",morning:"There is little room between the beds. A kettle is warming near the hearth.",midday:"A servant has brought food; the physician is trying to keep the room orderly.",afternoon:"The light is fading at the narrow windows. Visitors speak quietly near the beds.",evening:"The patients are settling. Footsteps and low voices carry along the corridor.",night:"The infirmary is quiet except for the coughs of the sick and the movement of the night attendant."},
+      tavern:{dawn:"The room is cold. Someone is sweeping last night's rushes from the floor.",morning:"The kitchen is warming, and a few travellers are eating before taking the road.",midday:"The benches are half full. The talk is mostly about prices, weather and the state of the road.",afternoon:"A handful of regulars linger by the fire while Rowan keeps an eye on the door.",evening:"The room grows louder as workers come in for a hot meal and news.",night:"The fire is low. Rowan is turning away late drinkers and preparing to bar the door."},
+      abbey:{dawn:"A bell sounds from the chapel. The brothers are beginning their morning duties.",morning:"Footsteps cross the cloister. The day's copying, cleaning and carrying have begun.",midday:"The abbey grows quieter for the meal and prayers.",afternoon:"A few visitors wait near the outer door while the brothers finish their work.",evening:"The last duties are being finished before the doors are closed.",night:"The abbey is quiet. The watch at the gate is the only movement in the yard."},
+      gate:{dawn:"The road is damp and nearly empty. The first carts have not yet reached the gate.",morning:"Farm carts and travellers are arriving in small groups; the serjeant is checking their business.",midday:"The road is busier. A cart waits while its load is inspected.",afternoon:"Dust and mud settle around the gate as the traffic begins to slow.",evening:"The serjeant is warning travellers not to linger outside the walls after dusk.",night:"The gate is shut. A watchman listens for movement on the road."},
+      keep:{dawn:"Servants are carrying water through the courtyard before the household is fully awake.",morning:"The steward's clerks are at their tables and petitioners wait to be heard.",midday:"The household has stopped for its meal; the corridors are quieter.",afternoon:"Reports and requests are being brought to the steward's office.",evening:"The household is finishing its business for the day; visitors are seldom received now.",night:"The keep is quiet except for the guards changing watch."}
+    };
+    return ambience[id]?.[part]||"The village continues its ordinary work around you.";
+  }
+  function localContextFor(id){
+    const routine=routineFor(id),weather=weatherForToday();
+    return {time:timeLabel(),dayPart:dayPart(),weather:weather.label,weatherDetail:weather.detail,place:places[state.location].name,localScene:ambientForPlace(state.location),activity:routine.activity,relationship:relationshipFor(id).title,meetings:ps(id).meetings||0,lastMetDay:ps(id).lastMetDay||0,lastMetPlace:ps(id).lastMetPlace||""};
+  }
   function activeAt(id){
-    const p=people[id],h=Math.floor(state.minute/60);
-    if(id==="edmund")return state.location==="infirmary"||(state.location==="market"&&h>=11&&h<13);
-    if(id==="margaret")return state.location==="market"&&h>=6&&h<18;
-    if(id==="rowan")return state.location==="tavern"||(state.location==="market"&&h>=7&&h<9);
-    if(id==="anselm")return state.location==="abbey"||(state.location==="infirmary"&&h>=15&&h<17);
-    if(id==="mara")return state.location==="gate"||(state.location==="market"&&h>=8&&h<10);
-    if(id==="hobb")return state.location==="gate"||(state.location==="keep"&&h>=8&&h<17);
-    if(id==="alwyn")return state.location==="keep";
-    if(id==="aldric")return state.location==="keep"&&h>=9&&h<18;
-    return state.location===p.location;
+    const routine=routineFor(id);
+    return routine.available&&routine.place===state.location;
   }
   function presentPeople(){return Object.values(people).filter(p=>activeAt(p.id));}
   function buildSceneSvg(scene){
@@ -102,7 +188,8 @@
     </svg>`;
   }
   function renderScene(){
-    const p=places[state.location];$("#scene-title").textContent=p.name;$("#scene-description").textContent=p.desc;$("#scene-eyebrow").textContent=p.eyebrow;$("#scene-caption").textContent=p.name.toUpperCase()+" · ASHENFORD";$("#scene-weather").textContent=p.weather;$("#scene-art").innerHTML=buildSceneSvg(p.scene);
+    const p=places[state.location],weather=weatherForToday();
+    $("#scene-title").textContent=p.name;$("#scene-description").textContent=p.desc+" "+ambientForPlace(state.location)+" "+weather.detail;$("#scene-eyebrow").textContent=p.eyebrow;$("#scene-caption").textContent=p.name.toUpperCase()+" · ASHENFORD";$("#scene-weather").textContent=weather.label.toUpperCase();$("#scene-art").innerHTML=buildSceneSvg(p.scene);
     const spots=[];
     if(state.location==="market"&&state.quests.ledger===0){if(!state.flags.herbs)spots.push({label:"Gather rosemary",x:31,y:65,action:"herbs"});if(!state.flags.linen)spots.push({label:"Collect clean linen",x:68,y:67,action:"linen"});}
     if(state.location==="abbey"&&state.quests.bell===3&&!state.flags.sawFibres)spots.push({label:"Examine the bell tower",x:53,y:35,action:"tower"});
@@ -115,7 +202,7 @@
   }
   function renderPeople(){
     const present=presentPeople();$("#present-count").textContent=present.length;
-    $("#inhabitants-list").innerHTML=present.map(p=>`<button class="inhabitant-card" data-person="${p.id}"><span class="mini-portrait">${p.icon}</span><span class="inhabitant-copy"><strong>${p.name}</strong><small>${p.role}</small></span><span class="presence-dot"></span></button>`).join("")||'<p class="speech-hint">No one is nearby.</p>';
+    $("#inhabitants-list").innerHTML=present.map(p=>{const routine=routineFor(p.id);return `<button class="inhabitant-card" data-person="${p.id}"><span class="mini-portrait">${p.icon}</span><span class="inhabitant-copy"><strong>${p.name}</strong><small>${p.role} · ${escapeHtml(routine.activity)}</small></span><span class="presence-dot"></span></button>`;}).join("")||'<p class="speech-hint">No one is nearby.</p>';
     $$("[data-person]").forEach(b=>b.addEventListener("click",()=>openDialogue(b.dataset.person)));
     $("#people-count").textContent=Object.values(people).filter(p=>ps(p.id).met).length;
   }
@@ -148,21 +235,42 @@ function renderGuide(){
   }
     function render(){
     renderGuide();
-    $("#clock-label").textContent="Day "+roman(state.day)+" · "+timeLabel();$("#header-date").textContent="THE YEAR OF OUR LORD 1348";$("#weather-label").textContent=state.day%3===0?"Cold drizzle":"Low mist";$("#role-label").textContent=state.roleName;$("#rep-value").textContent=state.reputation;$("#chapter-label").textContent="Chapter I · "+state.chapter;$("#standing-title").textContent=state.reputation;$("#standing-desc").textContent=state.reputation==="Unknown"?"No one knows your name.":"Your name is beginning to travel.";
+    $("#clock-label").textContent="Day "+roman(state.day)+" · "+timeLabel();$("#header-date").textContent="THE YEAR OF OUR LORD 1348";$("#weather-label").textContent=weatherForToday().label;$("#role-label").textContent=state.roleName;$("#rep-value").textContent=state.reputation;$("#chapter-label").textContent="Chapter I · "+state.chapter;$("#standing-title").textContent=state.reputation;$("#standing-desc").textContent=state.reputation==="Unknown"?"No one knows your name.":"Your name is beginning to travel.";
     renderScene();renderPlaces();renderPeople();renderEvents();
     const q=activeQuest();$("#active-quest-card").innerHTML=`<div class="quest-kicker">${q.meta}</div><div class="quest-name">${q.name}</div><div class="quest-summary">${q.desc}</div><div class="quest-progress"><span style="width:${q.progress}%"></span></div><div class="quest-meta">${q.progress}% · JOURNEY RECORDED</div>`;
     $("#journal-count").textContent=Object.values(state.quests).filter(v=>v>=0).length;$("#inventory-count").textContent=state.inventory.length;
     if(state.started&&$("#start-overlay")){$("#start-overlay").classList.add("hidden");}
   }
+  function travelDuration(from,to){
+    const routes={
+      market:{infirmary:10,tavern:8,abbey:18,gate:16,keep:28},
+      infirmary:{market:10,tavern:13,abbey:17,gate:24,keep:30},
+      tavern:{market:8,infirmary:13,abbey:22,gate:20,keep:30},
+      abbey:{market:18,infirmary:17,tavern:22,gate:25,keep:19},
+      gate:{market:16,infirmary:24,tavern:20,abbey:25,keep:32},
+      keep:{market:28,infirmary:30,tavern:30,abbey:19,gate:32}
+    };
+    return routes[from]?.[to]||15;
+  }
   function travel(id){
     if(id==="keep"&&!state.flags.keepUnlocked&&state.role!=="courier"){toast("The keep's guards bar strangers from the courtyard. Speak with Serjeant Hobb.");return;}
     if(id==="keep"&&!state.flags.keepUnlocked&&state.role==="courier")state.flags.keepUnlocked=true;
-    if(state.location===id)return;state.location=id;changeTime(25);addTimeline("You travelled to "+places[id].name+".");addEvent("A traveller was seen near "+places[id].short+".");render();save();toast("You have arrived at "+places[id].name+".");
+    if(state.location===id)return;
+    const from=state.location,minutes=travelDuration(from,id);
+    state.location=id;changeTime(minutes);
+    addTimeline("You walked from "+places[from].name+" to "+places[id].name+" ("+minutes+" minutes).");
+    addEvent("You arrive at "+places[id].name+". "+ambientForPlace(id));
+    render();save();toast("You reached "+places[id].name+" after about "+minutes+" minutes on foot.");
   }
   function openDialogue(id){
-    activePerson=id;const p=people[id],s=ps(id);s.met=true;remember(id,"You met the traveller at "+places[state.location].short+".");
-    $("#dialogue-role").textContent=p.role.toUpperCase();$("#dialogue-name").textContent=p.name;const regard=relationshipFor(id);$("#dialogue-status").textContent=regard.summary;$("#character-profile").innerHTML=`<div class="portrait-large">${p.icon}</div><div class="profile-name">${p.name}</div><div class="profile-role">${p.role}</div><p class="profile-lore">${p.lore}</p><div class="profile-connections"><strong>KNOWN CONNECTIONS</strong><span>${p.connections}</span></div><div class="npc-regard-card"><span class="npc-regard-kicker">YOUR STANDING</span><strong class="npc-regard-title">${regard.title}</strong><div class="npc-regard-meter"><span style="width:${regard.trust}%"></span></div><small class="npc-regard-copy">${regard.summary}</small></div>`;
-    const log=state.dialogueLog[id]||[];if(!log.length)log.push({who:p.name,text:p.greeting});state.dialogueLog[id]=log;renderDialogue();$("#dialogue-overlay").classList.remove("hidden");renderPeople();save();
+    activePerson=id;const p=people[id],s=ps(id),firstMeeting=!s.met;
+    s.met=true;s.meetings=(s.meetings||0)+1;s.lastMetDay=state.day;s.lastMetMinute=state.minute;s.lastMetPlace=state.location;
+    if(firstMeeting)remember(id,"You first met at "+places[state.location].short+" on day "+state.day+".");
+    $("#dialogue-role").textContent=p.role.toUpperCase();$("#dialogue-name").textContent=p.name;const regard=relationshipFor(id);$("#dialogue-status").textContent=regard.summary;$("#character-profile").innerHTML=`<div class="portrait-large">${p.icon}</div><div class="profile-name">${p.name}</div><div class="profile-role">${p.role}</div><p class="profile-lore">${p.lore}</p><div class="profile-connections"><strong>KNOWN CONNECTIONS</strong><span>${p.connections}</span></div><div class="npc-regard-card"><span class="npc-regard-kicker">THEIR REGARD</span><strong class="npc-regard-title">${regard.title}</strong><small class="npc-regard-copy">${regard.summary}</small></div>`;
+    const log=state.dialogueLog[id]||[];
+    if(!log.length)log.push({who:p.name,text:normalizeNpcSpeech(p.greeting)});
+    else if(!firstMeeting){const lastDay=s.lastMetDay||state.day; if(state.day>lastDay+2)remember(id,"Some time has passed since your last meeting.");}
+    state.dialogueLog[id]=log;renderDialogue();$("#dialogue-overlay").classList.remove("hidden");renderPeople();save();
   }
   const emotionColors={fear:"#a84f45",concern:"#c79742",anger:"#c56d3c",trust:"#66835d",curiosity:"#6488a9"};
   function renderDialogue(){
@@ -186,7 +294,19 @@ function renderGuide(){
     if(id==="aldric")return [{label:"Speak of the bell mystery.",action:"kingbell"},{label:"Ask about Ashenford's troubles.",action:"troubles"}];
     return [{label:"Ask about the plague.",action:"plague"},{label:"Ask about this village.",action:"village"},{label:"Ask about the bell.",action:"bell"},{label:"Speak of modern inventions.",action:"modern"}];
   }
-  function say(text,who){const log=state.dialogueLog[activePerson]||[];log.push({who:who||people[activePerson].name,text});state.dialogueLog[activePerson]=log.slice(-18);renderDialogue();save();}
+  function normalizeNpcSpeech(value){
+    return String(value||"")
+      .replace(/\bwhat dost thou\b/gi,"what do you").replace(/\bdost thou\b/gi,"do you").replace(/\bart thou\b/gi,"are you").replace(/\bhast thou\b/gi,"have you")
+      .replace(/\bthou hast\b/gi,"you have").replace(/\bthou art\b/gi,"you are").replace(/\bthou wouldst\b/gi,"you would").replace(/\bthou wilt\b/gi,"you will").replace(/\bthou shalt\b/gi,"you shall")
+      .replace(/\bthou standest\b/gi,"you stand").replace(/\bthou speakest\b/gi,"you speak").replace(/\bthou bringest\b/gi,"you bring")
+      .replace(/\bthou\b/gi,"you").replace(/\bthee\b/gi,"you").replace(/\bthy\b/gi,"your").replace(/\bthine\b/gi,"yours")
+      .replace(/\bdost\b/gi,"do").replace(/\bdoth\b/gi,"does").replace(/\bhast\b/gi,"have").replace(/\bhath\b/gi,"has").replace(/\bart\b/gi,"are").replace(/\bwouldst\b/gi,"would").replace(/\bwilt\b/gi,"will");
+  }
+  function say(text,who){
+    const speaker=who||people[activePerson].name;
+    const clean=speaker==="You"?String(text):normalizeNpcSpeech(text);
+    const log=state.dialogueLog[activePerson]||[];log.push({who:speaker,text:clean});state.dialogueLog[activePerson]=log.slice(-18);renderDialogue();save();
+  }
   function closeDialogue(){if(activeRequestController)activeRequestController.abort();activeRequestController=null;if(pendingDialogueLine&&activePerson){const log=state.dialogueLog[activePerson]||[];const i=log.indexOf(pendingDialogueLine);if(i>=0)log.splice(i,1);}pendingDialogueLine=null;const input=$("#speech-input"),send=$("#speech-form button");if(input)input.disabled=false;if(send)send.disabled=false;$("#dialogue-overlay").classList.add("hidden");activePerson=null;render();}
   function completeBell(outcome){
     state.quests.bell=4;state.flags.ending=outcome;state.chapter="The Bell at Dusk";state.reputation=outcome==="protect"?"A Keeper of Secrets":outcome==="expose"?"Truth-Teller":"Voice of the Village";state.flags.keepUnlocked=true;
@@ -231,38 +351,40 @@ function renderGuide(){
     adjust(id,{curiosity:2});renderDialogue();render();save();
   }
   function modernReply(id,subject){
-    const p=people[id];
-    if(id==="edmund")return "Thou speakest of a device that acts without hand or horse? I know no such art. Is this some instrument of the alchemists?";
-    if(id==="margaret")return "A curious contrivance indeed. Can it weigh grain, keep accounts, or summon a buyer? If not, I see little reason to trade for it.";
-    if(id==="rowan")return "If it brings music or news, perhaps the tavern might find a use for it. Yet I shall not let it near my ale.";
-    if(id==="anselm")return "I shall not name every wonder witchcraft, but such a thing belongs in the hands of a careful scholar, not a frightened crowd.";
-    if(id==="mara")return "I have no time for conjuring. If it can find Will, show me. If it cannot, put it away.";
-    if(id==="hobb")return "No strange device shall pass the gate unexamined. Put it away and answer my questions.";
-    return "Thou bringest strange wonders into my hall. Explain thy craft before I decide whether it is useful or forbidden.";
+    if(id==="edmund")return "I've never encountered a device like that. What does it do, exactly?";
+    if(id==="margaret")return "Could it help someone buy or sell goods? That's the part I'd want to understand.";
+    if(id==="rowan")return "Does it play music, or is it meant for work? Keep it away from the hearth either way.";
+    if(id==="anselm")return "I don't know what to make of that. Please explain it slowly; I would rather ask than pretend I understand.";
+    if(id==="mara")return "Could it help find someone on the road? If not, I have little use for it.";
+    if(id==="hobb")return "I cannot allow an unknown object through the gate until I know what it is.";
+    return "I have no experience with such a thing. Explain its use, and leave out the impossible claims.";
   }
-async function askNoxenStudio(text,personId){
+  async function askNoxenStudio(text,personId){
     const p=people[personId],saved=ps(personId),hint=$("#speech-hint");
     if(activeRequestController)activeRequestController.abort();
     const controller=new AbortController();activeRequestController=controller;
     pendingDialogueLine={who:p.name,text:"Listening to your words…",pending:true};
     (state.dialogueLog[personId]||(state.dialogueLog[personId]=[])).push(pendingDialogueLine);
     if(hint)hint.textContent="NOXEN Studio · composing a reply…";
-    const memory=saved.memories.slice(0,3).join("; ")||"No personal memories yet.",q=activeQuest();
+    const memory=saved.memories.slice(0,4).join("; ")||"No personal memories yet.",q=activeQuest(),profile=npcProfiles[personId]||{},context=localContextFor(personId),routine=routineFor(personId);
     const prompt=[
-      "Write the next in-character NPC line for a medieval roleplaying game set in fictional Ashenford, 1348.",
-      "Character: "+p.name+", "+p.role+". Personality: "+p.lore+" Connections: "+p.connections,
-      "Use natural, readable medieval-leaning English. Reply in 1–3 short sentences. Stay in character; do not narrate the player's actions.",
-      "This is a medieval setting in 1348, not the Victorian period. Keep manners, titles, hierarchy, and daily customs appropriate to medieval Ashenford.",
-      "Player's station: "+(roles[state.role]?.station||state.roleName)+". Let this role affect relevant etiquette and what the NPC expects, but never assume personality, ability, worth, or treatment from gender.",
-      "Build only non-romantic bonds: cautiousness, respect, friendship, trust, gratitude, loyalty, and protective alliance. Do not flirt, court, seduce, or portray an NPC as falling in love with the player.",
-      "Trust must be earned through consistent choices and remembered actions. Do not grant large trust increases for a single compliment; keep each reaction faithful to the NPC's age, personality, memories, emotions, and social position.",
-      "Knowledge is limited to medieval life. Modern technology and slang are unfamiliar; react with believable confusion. Do not invent quest completion or contradict facts. No real-world medical advice.",
-      "Relationship: "+JSON.stringify(relationshipFor(personId))+". Emotions: "+JSON.stringify(saved.emotions)+". Memories: "+memory,
-      "Place: "+places[state.location].name+". Time: Day "+state.day+" "+timeLabel()+". Player: "+state.roleName+". Quest: "+q.name+" — "+q.desc,
-      "Return ONLY JSON: {\"reply\":\"...\",\"emotion_delta\":{},\"memory\":\"\"}. emotion_delta may contain fear, concern, anger, trust, curiosity integers from -6 to 6.",
-      "Player says: "+text.slice(0,200)
+      "You are writing spoken dialogue for one specific person in Ashenford, a fictional English village in 1348.",
+      "You are not a narrator, quest announcer, game guide or chatbot. Speak only as "+p.name+".",
+      "PERSON: "+p.name+", age "+p.age+", role "+p.role+". Background: "+p.lore,
+      "MANNER: "+(profile.manner||"Speak plainly and consistently with your character.")+" Current worry: "+(profile.concern||"Their own ordinary concerns.")+" Knowledge: "+(profile.knowledge||"Only what this person could reasonably know."),
+      "RIGHT NOW: "+context.activity+". The place is "+context.place+". It is "+context.dayPart+" at "+context.time+". Weather: "+context.weather+". Surroundings: "+context.localScene,
+      "PLAYER: "+state.roleName+". Social position: "+(roles[state.role]?.station||state.roleName)+". Let their position affect relevant forms of address and expectations, but do not assume their gender, personality or ability.",
+      "RELATIONSHIP: "+context.relationship+". They have met the player "+context.meetings+" time(s). Memories: "+memory,
+      "QUEST CONTEXT: "+q.name+" — "+q.desc+". Current recorded facts: bell stage "+state.quests.bell+", ledger stage "+state.quests.ledger+", parcel stage "+state.quests.parcel+", missing courier stage "+state.quests.will+". Never invent a completed task, clue, promise or event.",
+      "STYLE: Use clear, natural, spoken English that is easy to understand. The setting is medieval, but do not imitate Shakespeare. Do not use 'thou', 'thee', 'thy', fake archaic grammar or constant grand speeches. A little period-appropriate vocabulary is fine when natural.",
+      "REALISM: Answer the exact thing the player said. Use what you know, not what would make the plot convenient. You may be busy, distracted, uncertain, suspicious, tired, amused, impatient or unwilling to answer. Do not agree with everything. Do not become close because of one compliment. Do not repeat greetings, explain the whole quest, or end every reply with a question. Vary the length naturally, usually one to three short sentences.",
+      "CONTINUITY: Use the supplied conversation history. Remember what this player has actually told you, including disagreements and promises. Do not repeat information they already know unless there is a reason. Do not narrate the player's feelings, thoughts or actions.",
+      "TRUST: Ordinary small talk, praise and thanks do not earn trust by themselves. Stronger regard follows specific, remembered actions and kept promises. Return a trust change of 0 unless the player's message provides clear evidence of help, honesty, betrayal or harm. Any trust change must be between -1 and 1 for this single exchange. Other emotion changes must be between -2 and 2.",
+      "MEMORY: Only return a short concrete fact, promise, clue or important personal detail that this person should remember later. Return an empty string when there is nothing worth keeping.",
+      "Return ONLY JSON: {\"reply\":\"spoken line\",\"emotion_delta\":{\"fear\":0,\"concern\":0,\"anger\":0,\"trust\":0,\"curiosity\":0},\"memory\":\"\"}.",
+      "Player says: "+text.slice(0,240)
     ].join("\n");
-    const timeout=setTimeout(()=>controller.abort(),12000);
+    const timeout=setTimeout(()=>controller.abort(),18000);
     try{
       const response=await fetch("https://noxenlabs.vercel.app/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:prompt,selectedModel:"NOXEN Studio",agentMode:false,webSearch:false,attachments:[],history:(state.dialogueLog[personId]||[]).filter(line=>!line.pending).slice(-11,-1).map(line=>({role:line.who==="You"?"user":"assistant",content:String(line.text||"").slice(0,500)}))}),signal:controller.signal});
       const data=await response.json().catch(()=>({}));
@@ -282,9 +404,15 @@ async function askNoxenStudio(text,personId){
       const log=state.dialogueLog[personId]||[],i=log.indexOf(pendingDialogueLine);if(i>=0)log.splice(i,1);pendingDialogueLine=null;
       say(reply.slice(0,700));
       const delta=parsed?.emotion_delta&&typeof parsed.emotion_delta==="object"?parsed.emotion_delta:{},safeDelta={};
-      ["fear","concern","anger","trust","curiosity"].forEach(k=>{const n=Number(delta[k]);if(Number.isFinite(n))safeDelta[k]=Math.max(-6,Math.min(6,Math.round(n)));});
-      adjust(personId,safeDelta);if(typeof parsed?.memory==="string"&&parsed.memory.trim())remember(personId,parsed.memory.trim().slice(0,140));
-      remember(personId,"You said: "+text.slice(0,90));renderDialogue();render();save();
+      ["fear","concern","anger","curiosity"].forEach(k=>{const n=Number(delta[k]);if(Number.isFinite(n))safeDelta[k]=Math.max(-2,Math.min(2,Math.round(n)));});
+      const positiveEvidence=/\b(i brought|i returned|i delivered|i found|i kept my promise|i helped|i protected|i shared|i paid|i repaid|i apologised|i apologized|i was wrong|i did as promised)\b/i.test(text);
+      const negativeEvidence=/\b(i lied|i stole|i betrayed|i threatened|i hurt|i broke my promise|i refuse to help|i won't help)\b/i.test(text);
+      const proposedTrust=Number(delta.trust);
+      if(Number.isFinite(proposedTrust)&&positiveEvidence)safeDelta.trust=Math.max(0,Math.min(1,Math.round(proposedTrust)));
+      else if(Number.isFinite(proposedTrust)&&negativeEvidence)safeDelta.trust=Math.min(0,Math.max(-1,Math.round(proposedTrust)));
+      if(typeof parsed?.memory==="string"&&parsed.memory.trim())remember(personId,parsed.memory.trim().slice(0,140));
+      if(/\b(my name|i am|i'm|my family|i live|i came|i promise|i found|i brought|i saw|i heard|i delivered|i returned|i helped|i owe|i lost|i fear|i believe|i was wrong)\b/i.test(text))remember(personId,"You said: "+text.slice(0,90));
+      adjust(personId,safeDelta);renderDialogue();render();save();
       if(hint)hint.textContent="NOXEN Studio · Character roleplay";
     }catch(error){
       if(activePerson!==personId)return;
@@ -302,17 +430,17 @@ async function askNoxenStudio(text,personId){
     function reactToFreeText(text,alreadyLogged=false){
     const t=text.trim();if(!t||!activePerson)return;if(t.length>240)return;if(!alreadyLogged){say(t,"You");changeTime(3);}
     const low=t.toLowerCase(),id=activePerson,p=people[id];let reply="";
-    if(/phone|smartphone|computer|laptop|internet|wifi|wi-fi|google|ai\b|robot|electric|electricity|satellite|car\b|engine|camera|app\b/.test(low)){reply=modernReply(id,t);adjust(id,{fear:8,curiosity:14});remember(id,"You spoke of a strange modern invention.");}
-    else if(/bro|bruh|lol|lmao|no cap|cooked|ate|slay|rizz|fr|ngl|idk/.test(low)){reply="Good heavens! What peculiar cant is this? Speak plainly, traveller; I cannot make sense of half these clipped expressions.";adjust(id,{anger:4,curiosity:5});}
-    else if(/plague|sick|ill|disease|fever/.test(low)){reply="The sickness has cast a long shadow over Ashenford. I shall not trust every rumour, but the fear in the cottages is plain.";adjust(id,{concern:8});}
-    else if(/bell|ring|midnight|tower/.test(low)){reply=id==="anselm"?"The abbey bell is silent by order. I pray thou wilt not ask why the tower stair is watched.": "The bell was heard after midnight. Ask those who were awake, and listen for what they do not say.";if(state.quests.bell===0){state.quests.bell=1;addTimeline("You began investigating the strange bell.");}}
-    else if(/thank|thanks/.test(low)){reply="Thou art welcome. A courteous word is a rare coin in these troubled times.";adjust(id,{trust:4,anger:-3});}
-    else if(/sorry|apolog/.test(low)){reply="Let the matter rest. We have little cause to quarrel, provided thou speakest with care.";adjust(id,{trust:5,anger:-8});}
+    if(/phone|smartphone|computer|laptop|internet|wifi|wi-fi|google|ai\b|robot|electric|electricity|satellite|car\b|engine|camera|app\b/.test(low)){reply=modernReply(id,t);adjust(id,{fear:1,curiosity:2});remember(id,"You spoke of an unfamiliar modern invention.");}
+    else if(/bro|bruh|lol|lmao|no cap|cooked|ate|slay|rizz|fr|ngl|idk/.test(low)){reply="I don't know that expression. Could you say it another way?";adjust(id,{curiosity:1});}
+    else if(/plague|sick|ill|disease|fever/.test(low)){reply=id==="edmund"?"I've seen enough fever this week. Tell me what you observed, not what someone in the street claims.":"There is sickness in the village. People are frightened, and most of what they repeat has not been checked.";adjust(id,{concern:1});}
+    else if(/bell|ring|midnight|tower/.test(low)){reply=id==="anselm"?"I have already told you what I can. The stair is not open to visitors.":id==="edmund"?"I heard it from the infirmary, shortly after midnight. I did not see who rang it.":"I heard talk of a bell, but I cannot tell you more than what I witnessed.";if(state.quests.bell===0){state.quests.bell=1;addTimeline("You began investigating the strange bell.");}}
+    else if(/thank|thanks/.test(low)){reply=id==="margaret"?"You're welcome. Now, was there something else?":id==="rowan"?"No trouble. Mind the step by the door.":"You're welcome."; }
+    else if(/sorry|apolog/.test(low)){reply="All right. I'd rather settle the matter and get on with the work.";adjust(id,{anger:-2});}
     else if(/who are you|your name|what is your name/.test(low)){reply="I am "+p.name+", "+p.role.toLowerCase()+". My place in Ashenford is known to those who have reason to seek me.";}
     else if(/help|quest|task|job|work/.test(low)){reply="There is always work for an honest pair of hands. Speak with the folk of the market, the infirmary, and the tavern; each has a burden to share.";adjust(id,{curiosity:4});}
     else if(/king|queen|royal|castle|keep/.test(low)){reply="The keep overlooks us all. King Aldric expects loyalty, while Steward Alwyn expects his accounts to be exact.";}
-    else {reply=p.voice==="royal"?"Choose thy words carefully. I shall hear thee, though I cannot promise favour.":p.voice==="warm"?"Aye, I hear thee. Tell me more, and I shall see whether I can be of service.":"I hear thee, traveller, though thy meaning is not yet clear. Speak further, and be plain.";}
-    say(reply);remember(id,"You said: "+t.slice(0,90));adjust(id,{curiosity:2});renderDialogue();render();save();
+    else {reply=id==="margaret"?"I'm listening. Be specific; there's work to do here.":id==="rowan"?"Go on. I'm here, though I may have to see to the kitchen in a moment.":id==="mara"?"What is it? I can't stand here all morning.":id==="edmund"?"Tell me what happened, in order. Leave out the guesses.":id==="anselm"?"I'm not sure I follow. Could you explain what you mean?":id==="hobb"?"I need a clear answer, not a long story.":id==="alwyn"?"Please get to the point. I have accounts to finish.":"I hear you. What matters most is what can be proved.";}
+    say(reply);if(/\b(i promise|i found|i brought|i saw|i heard|i delivered|i returned|i helped|my name|my family)\b/i.test(t))remember(id,"You said: "+t.slice(0,90));adjust(id,{curiosity:1});renderDialogue();render();save();
   }
   function sceneAction(action){
     if(action==="tower"){
