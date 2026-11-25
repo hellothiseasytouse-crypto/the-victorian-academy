@@ -497,10 +497,10 @@ function renderGuide(){
     openModal("People of Ashenford",`<div class="journal-grid">${cards}</div>`,"THE SETTLEMENT");
   }
   function openInventory(){openModal("Your satchel",`<div class="inventory-grid">${state.inventory.map(i=>`<div class="inventory-item"><span>${i.icon}</span><strong>${escapeHtml(i.name)}</strong><small>${escapeHtml(i.desc)}</small></div>`).join("")||"<p>Your satchel is empty.</p>"}</div>`,"BELONGINGS & FINDS");}
-function addFalseRumour(sourceId){
+function addFalseRumour(sourceId,leverageDetail){
     const p=state.politics;
     if(p.rumours.some(r=>r.sourceId===sourceId&&!r.refuted))return false;
-    const leverage=leverageFor(sourceId);if(!leverage)return false;
+    const leverage=leverageDetail||leverageFor(sourceId);if(!leverage)return false;
     const rumorId="rumour-"+sourceId+"-"+state.day;
     p.rumours.push({id:rumorId,sourceId,source:people[sourceId].name,text:leverage.rumour,false:true,spread:0,createdDay:state.day,lastSpreadDay:state.day,refuted:false});
     p.royalSuspicion=clamp((p.royalSuspicion||0)+4);
@@ -531,7 +531,7 @@ function addFalseRumour(sourceId){
       say(detail.failure);
       addEvent(people[id].name+" has refused a threat and is no longer willing to trust you.");
     }
-    if(Math.random()<(complied?.78:1))addFalseRumour(id);
+    if(Math.random()<(complied ? 0.78 : 1))addFalseRumour(id,detail);
     addEvent("Word is spreading that you have been using private information to pressure people.");
     renderEvents();save();
   }
@@ -652,22 +652,24 @@ function addFalseRumour(sourceId){
     const p=state.politics,m=politicsMetrics();
     const evidence=p.evidence.map(item=>`<article class="council-record"><span class="council-record-mark">✦</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p><small>From ${escapeHtml(item.source)} · Day ${roman(item.day)}</small></div></article>`).join("");
     const grievances=p.grievances.map(item=>`<article class="council-record grievance-record"><span class="council-record-mark">✉</span><div><strong>${escapeHtml(item.title)}</strong><p>${escapeHtml(item.detail)}</p><small>Raised by ${escapeHtml(item.source)} · Day ${roman(item.day)}</small></div></article>`).join("");
+    const refuteReady=state.location==="keep"&&activeAt("aldric")&&canRefuteRumours();
+    const rumourCards=p.rumours.map((rumour,index)=>`<article class="council-record rumour-record ${rumour.refuted?"rumour-refuted":""}"><span class="council-record-mark">!</span><div><strong>${escapeHtml(rumour.source)} · ${rumour.refuted?"Answered":"Unverified report"}</strong><p>${escapeHtml(rumour.text)}</p><small>Repeated ${rumour.spread||0} time(s) · First heard Day ${roman(rumour.createdDay)}</small>${rumour.refuted?"":`<button class="rumour-refute-button" data-rumour-refute="${index}" ${refuteReady?"":"disabled"}>Challenge with evidence</button>`}</div></article>`).join("");
     const signers=Object.values(people).filter(person=>!["alwyn","aldric"].includes(person.id)).map(person=>{
       const reason=signatureReason(person.id),signed=p.signatures.includes(person.id),ready=reason==="Ask for their signature";
       return `<div class="council-signer"><div class="council-signer-icon">${person.icon}</div><div class="council-signer-copy"><strong>${person.name}</strong><small>${signed?"Name recorded":escapeHtml(reason)}</small></div><button class="council-sign-button" data-council-sign="${person.id}" ${(!ready||signed)?"disabled":""}>${signed?"Signed":ready?"Ask":"—"}</button></div>`;
     }).join("");
     const at=(id)=>state.location===routineFor(id).place&&activeAt(id);
     const action=(id,title,desc,ready,locked)=>`<button class="council-action" data-council-action="${id}" ${ready?"":"disabled"}><strong>${title}</strong><span>${desc}</span><small>${ready?"Available here":locked}</small></button>`;
-    const evidenceCount=p.evidence.length,grievanceCount=p.grievances.length,signatureCount=p.signatures.length;
+    const evidenceCount=p.evidence.length,credibleEvidenceCount=p.evidence.filter(item=>!item.coerced).length,grievanceCount=p.grievances.length,signatureCount=p.signatures.length;
     const petitionReady=grievanceCount>=2&&evidenceCount>=2&&signatureCount>=3;
     const auditReady=p.inquiryOpened&&at("alwyn")&&!p.stewardRemoved&&!hasPoliticalEvidence("royal-audit");
     const kingReady=at("aldric");
     const finalReady=p.kingConfronted&&kingReady&&!p.outcome;
     const result=p.outcome==="abdication"?"Aldric has formally stepped aside. A temporary council chosen by the village and household will govern while a lawful succession is settled.":p.outcome==="regency"?"The king has accepted a temporary council with authority over stores, levies and public accounts. The crown remains, but it no longer governs alone.":p.outcome==="reform"?"Alwyn has been removed from office pending judgment. The grain accounts are public, and the crown has ordered restitution to affected households.":"";
-    const status=p.outcome?"Political settlement reached":p.inquiryOpened?"Royal inquiry ordered":signatureCount>=3?"A public petition is taking shape":grievanceCount?"Grievances have been heard":"No formal complaint has reached the keep";
+    const status=p.executionOrdered?"The royal sentence has been issued":p.kingSummoned?"The king has summoned you":p.outcome?"Political settlement reached":p.inquiryOpened?"Royal inquiry ordered":signatureCount>=3?"A public petition is taking shape":grievanceCount?"Grievances have been heard":"No formal complaint has reached the keep";
     $("#modal-content").innerHTML=`
       <section class="council-intro"><div class="quest-kicker">ASHENFORD · THE YEAR OF OUR LORD 1348</div><h3>The weight of the crown</h3><p>Grain is short, levies are unpopular, and the king's steward controls the storehouse accounts. Listen to residents, compare testimony, gather signatures and take a case to the keep. A rumour is not proof; the court will ask for records.</p><div class="council-status">${status}</div></section>
-      <section class="council-meters"><div class="council-meter"><div><span>COMMON PETITION</span><b>${m.commonSupport}%</b></div><i><em style="width:${m.commonSupport}%"></em></i></div><div class="council-meter"><div><span>CROWN'S STANDING</span><b>${m.crownSupport}%</b></div><i><em style="width:${m.crownSupport}%"></em></i></div><div class="council-meter"><div><span>STEWARD'S INFLUENCE</span><b>${m.stewardInfluence}%</b></div><i><em style="width:${m.stewardInfluence}%"></em></i></div></section>
+      <section class="council-meters"><div class="council-meter"><div><span>COMMON PETITION</span><b>${m.commonSupport}%</b></div><i><em style="width:${m.commonSupport}%"></em></i></div><div class="council-meter"><div><span>CROWN'S STANDING</span><b>${m.crownSupport}%</b></div><i><em style="width:${m.crownSupport}%"></em></i></div><div class="council-meter"><div><span>STEWARD'S INFLUENCE</span><b>${m.stewardInfluence}%</b></div><i><em style="width:${m.stewardInfluence}%"></em></i></div><div class="council-meter suspicion-meter"><div><span>ROYAL SUSPICION</span><b>${p.royalSuspicion||0}%</b></div><i><em style="width:${p.royalSuspicion||0}%"></em></i></div></section>
       ${result?`<section class="council-settlement"><span>✦ THE SETTLEMENT</span><p>${result}</p></section>`:""}
       <section class="council-section"><div class="council-section-heading"><div><span>01 · LISTEN</span><h3>Hear the complaints</h3></div><small>Speak to people where they work</small></div><div class="council-action-grid">
         ${action("market_records","Compare the market tallies","Margaret has kept her own figures for grain bought and levies paid.",state.location==="market"&&at("margaret")&&!hasPoliticalEvidence("market-ledger"),"Go to the Market Cross while Margaret is at her stall")}
@@ -701,7 +703,7 @@ function addFalseRumour(sourceId){
       </section>
       <section class="council-section"><div class="council-section-heading"><div><span>THE RECORD</span><h3>Complaints received</h3></div><small>${grievanceCount} recorded</small></div>${grievances||'<p class="council-empty">No complaints have been formally recorded. Start by listening to people in the village.</p>'}</section>
       <section class="council-section"><div class="council-section-heading"><div><span>THE EVIDENCE</span><h3>Testimony and documents</h3></div><small>${evidenceCount} collected</small></div>${evidence||'<p class="council-empty">No supporting testimony has been collected yet.</p>'}</section>
-      <section class="council-section"><div class="council-section-heading"><div><span>PUBLIC WORD</span><h3>What people are saying</h3></div></div><p class="council-note">${escapeHtml(publicPoliticalClimate())}</p>${p.kingResponse?`<blockquote class="council-king-response">${escapeHtml(p.kingResponse)}</blockquote>`:""}</section>
+      <section class="council-section"><div class="council-section-heading"><div><span>PUBLIC WORD</span><h3>Rumours and accusations</h3></div><small>${p.rumours.filter(r=>!r.refuted).length} unanswered</small></div><p class="council-note">${escapeHtml(publicPoliticalClimate())}</p><p class="council-note">False reports are not proof. You may challenge them at the keep when you have two independent records and two willing witnesses.</p>${rumourCards||'<p class="council-empty">No personal rumours are circulating.</p>'}${p.kingSummoned?`<div class="council-settlement royal-warning"><span>ROYAL SUMMONS · DEADLINE DAY ${roman(p.judgementDueDay)}</span><p>The king requires your appearance. If the accusations remain unanswered, the court may issue a death sentence.</p></div>`:""}${p.kingResponse?`<blockquote class="council-king-response">${escapeHtml(p.kingResponse)}</blockquote>`:""}</section>
     `;
   }
   function openCouncil(){openModal("Town & Crown","","VILLAGE AFFAIRS");renderCouncil();}
@@ -833,7 +835,7 @@ function openMap(){
   function resume(){if(load()){$("#start-overlay").classList.add("hidden");render();toast("Your chronicle has been restored.");}else begin();}
   function wire(){
     $$(".nav-item").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.view;activeTab=v;$$(".nav-item").forEach(n=>n.classList.toggle("active",n===b));if(v==="world")toast("You are exploring Ashenford.");if(v==="council")openCouncil();if(v==="journal")openJournal();if(v==="people")openPeople();if(v==="inventory")openInventory();}));
-    $("#modal-content").addEventListener("click",e=>{const actionButton=e.target.closest("[data-council-action]");if(actionButton&&!actionButton.disabled){councilAction(actionButton.dataset.councilAction);return;}const signButton=e.target.closest("[data-council-sign]");if(signButton&&!signButton.disabled){const id=signButton.dataset.councilSign;if(signatureReason(id)==="Ask for their signature"){state.politics.signatures.push(id);remember(id,"You asked them to support the Common Petition; they agreed to add their name.");addTimeline(people[id].name+" signed the Common Petition.");addEvent(people[id].name+" has added a name to the petition.");changeTime(3);if(state.politics.signatures.length>=3&&!state.politics.petitionStarted){state.politics.petitionStarted=true;addEvent("The Common Petition is now being discussed openly in the village.");}save();render();renderCouncil();}}});
+    $("#modal-content").addEventListener("click",e=>{const refuteButton=e.target.closest("[data-rumour-refute]");if(refuteButton&&!refuteButton.disabled){refuteRumour(Number(refuteButton.dataset.rumourRefute));return;}const actionButton=e.target.closest("[data-council-action]");if(actionButton&&!actionButton.disabled){councilAction(actionButton.dataset.councilAction);return;}const signButton=e.target.closest("[data-council-sign]");if(signButton&&!signButton.disabled){const id=signButton.dataset.councilSign;if(signatureReason(id)==="Ask for their signature"){state.politics.signatures.push(id);remember(id,"You asked them to support the Common Petition; they agreed to add their name.");addTimeline(people[id].name+" signed the Common Petition.");addEvent(people[id].name+" has added a name to the petition.");changeTime(3);if(state.politics.signatures.length>=3&&!state.politics.petitionStarted){state.politics.petitionStarted=true;addEvent("The Common Petition is now being discussed openly in the village.");}save();render();renderCouncil();}}});
     $("#begin-game").addEventListener("click",begin);$("#continue-game").addEventListener("click",resume);
     $$(".role-option").forEach(b=>b.addEventListener("click",()=>{selectedRole=b.dataset.role;$$(".role-option").forEach(x=>x.classList.toggle("selected",x===b));}));
     $("#close-dialogue").addEventListener("click",closeDialogue);$("#dialogue-overlay").addEventListener("click",e=>{if(e.target===$("#dialogue-overlay"))closeDialogue();});
