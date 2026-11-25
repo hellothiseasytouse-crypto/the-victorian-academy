@@ -194,3 +194,12 @@ html,body{overflow-x:hidden;overflow-y:auto}
 .sentence-new-button:hover{background:#675132}
 @media(max-width:900px){.council-meters{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.council-meters{grid-template-columns:1fr}}
+
+/* Shelter, guest rights and household complaints. */
+.shelter-intro{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px;background:linear-gradient(135deg,#e8dcc0,#d7c39b);border:1px solid #a68a5d;color:#392e20}
+.shelter-intro>div:first-child>span{display:block;font-size:8px;letter-spacing:1.4px;color:#85683f}.shelter-intro strong{display:block;font:600 22px var(--book);margin:4px 0}.shelter-intro p{font:italic 11px var(--book);margin:0 0 5px;color:#6c593c}.shelter-intro small{font-size:9px;color:#806b4b}
+.shelter-intro-actions,.shelter-actions{display:flex;flex-wrap:wrap;gap:6px}.shelter-intro button,.shelter-actions button,.shelter-report button{border:1px solid #8d7046;background:#4b3b27;color:#f0dfbd;padding:8px 10px;font-size:8px;cursor:pointer}.shelter-intro button:disabled,.shelter-actions button:disabled{opacity:.45;cursor:not-allowed}
+.shelter-explainer{font:italic 11px/1.5 var(--book);color:#6b5739;margin:12px 0}.shelter-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.shelter-card{padding:11px;background:#f1e6cc;border:1px solid #a58a5e;color:#3d3020}.shelter-card.shelter-current{border-color:#8b744d;background:#e5d5b2;box-shadow:inset 0 0 0 1px #a78b5c}
+.shelter-card-head{display:flex;align-items:center;gap:8px}.shelter-symbol{width:31px;height:33px;display:grid;place-items:center;background:#403526;color:#e4ca96;border:1px solid #a98a59;font-size:18px}.shelter-card-head strong{display:block;font:600 14px var(--book)}.shelter-card-head small,.shelter-owner,.shelter-note{display:block;font-size:8px;line-height:1.45;color:#796545}.shelter-card p{font:italic 10px/1.45 var(--book);color:#66543a;min-height:42px}.shelter-actions{margin:9px 0 6px}
+.shelter-report{margin-top:12px;padding:12px;border:1px solid #a56d51;background:#f0d9c8;color:#573326}.shelter-report strong{font-size:8px;letter-spacing:1.2px}.shelter-report p{font:italic 11px/1.5 var(--book)}
+@media(max-width:640px){.shelter-grid{grid-template-columns:1fr}.shelter-intro{align-items:flex-start;flex-direction:column}}
