@@ -26,15 +26,17 @@ jobs:
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
 
           html = Path("index.html").read_text(encoding="utf-8")
-          scripts = re.findall(r"<script\\b[^>]*>([\\s\\S]*?)</script>", html, re.IGNORECASE)
-          if not scripts:
-              raise SystemExit("No bundled JavaScript found in index.html")
-          if not re.search(r"<style\\b", html, re.IGNORECASE):
-              raise SystemExit("No bundled stylesheet found in index.html")
-          Path("/tmp/victorian-academy.js").write_text("\\n".join(scripts), encoding="utf-8")
+          style_at = html.lower().find("<style")
+          script_at = html.lower().find("<script")
+          if style_at < 0 or script_at < 0:
+              raise SystemExit("Bundled CSS or JavaScript is missing from index.html")
+          script_open = html.find(">", script_at)
+          script_close = html.lower().find("</script>", script_open)
+          if script_open < 0 or script_close < 0:
+              raise SystemExit("Bundled JavaScript block is incomplete")
+          Path("/tmp/victorian-academy.js").write_text(html[script_open + 1:script_close], encoding="utf-8")
           PY
           node --check /tmp/victorian-academy.js
 
