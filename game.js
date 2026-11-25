@@ -41,7 +41,7 @@
   };
   function defaultState(){
     const npc={}; for(const p of Object.values(people)) npc[p.id]={met:false,meetings:0,firstMetDay:0,lastMetDay:0,lastMetMinute:null,lastMetPlace:"",emotions:{...p.emotions},memories:[],opinion:"Unknown"};
-    return {version:1,started:false,role:"traveller",roleName:"Wayfarer",location:"market",day:1,minute:555,chapter:"The Stranger",reputation:"Unknown",inventory:[{id:"travel-cloak",name:"Weatherworn cloak",icon:"🧥",desc:"A sturdy cloak, damp from the road."}],quests:{bell:0,ledger:-1,parcel:-1,will:-1},flags:{sawFibres:false,herbs:false,linen:false,willFound:false,keepUnlocked:false,ending:""},politics:{grievances:[],evidence:[],signatures:[],inquiryOpened:false,stewardQuestioned:false,kingConfronted:false,petitionStarted:false,audiencePass:false,stewardRemoved:false,outcome:"",kingResponse:"",assemblyCalled:false},npc,events:["The market is waking beneath a veil of mist.","A bell was heard after midnight, though the abbey says its clapper is removed."],timeline:[],dialogueLog:{},lastSaved:0};
+    return {version:1,started:false,role:"traveller",roleName:"Wayfarer",location:"market",day:1,minute:555,chapter:"The Stranger",reputation:"Unknown",inventory:[{id:"travel-cloak",name:"Weatherworn cloak",icon:"🧥",desc:"A sturdy cloak, damp from the road."}],quests:{bell:0,ledger:-1,parcel:-1,will:-1},flags:{sawFibres:false,herbs:false,linen:false,willFound:false,keepUnlocked:false,ending:""},politics:{grievances:[],evidence:[],signatures:[],rumours:[],blackmailed:[],royalSuspicion:0,kingSummoned:false,executionOrdered:false,judgementComplete:false,judgementDueDay:0,inquiryOpened:false,stewardQuestioned:false,kingConfronted:false,petitionStarted:false,audiencePass:false,stewardRemoved:false,outcome:"",kingResponse:"",assemblyCalled:false},npc,events:["The market is waking beneath a veil of mist.","A bell was heard after midnight, though the abbey says its clapper is removed."],timeline:[],dialogueLog:{},lastSaved:0};
   }
   let state=defaultState(), selectedRole="traveller", activePerson=null, activeTab="world";
   let toastTimer=null, activeRequestController=null, pendingDialogueLine=null;
@@ -54,7 +54,7 @@
     catch(e){$("#save-indicator").textContent="Save unavailable";toast("Browser storage is unavailable. Export a save as backup.");}
   }
   function load(){
-    try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return false;const saved=JSON.parse(raw);if(!saved||saved.version!==1)return false;state={...defaultState(),...saved,politics:{...defaultState().politics,...(saved.politics||{})},npc:{...defaultState().npc,...saved.npc}};state.politics.grievances=Array.isArray(state.politics.grievances)?state.politics.grievances:[];state.politics.evidence=Array.isArray(state.politics.evidence)?state.politics.evidence:[];state.politics.signatures=Array.isArray(state.politics.signatures)?state.politics.signatures:[];Object.keys(state.npc).forEach(id=>{state.npc[id]={...defaultState().npc[id],...state.npc[id],emotions:{...defaultState().npc[id].emotions,...(state.npc[id].emotions||{})}};});return !!state.started;}catch(e){return false;}
+    try{const raw=localStorage.getItem(SAVE_KEY);if(!raw)return false;const saved=JSON.parse(raw);if(!saved||saved.version!==1)return false;state={...defaultState(),...saved,politics:{...defaultState().politics,...(saved.politics||{})},npc:{...defaultState().npc,...saved.npc}};state.politics.grievances=Array.isArray(state.politics.grievances)?state.politics.grievances:[];state.politics.evidence=Array.isArray(state.politics.evidence)?state.politics.evidence:[];state.politics.signatures=Array.isArray(state.politics.signatures)?state.politics.signatures:[];state.politics.rumours=Array.isArray(state.politics.rumours)?state.politics.rumours:[];state.politics.blackmailed=Array.isArray(state.politics.blackmailed)?state.politics.blackmailed:[];state.politics.royalSuspicion=clamp(Number(state.politics.royalSuspicion)||0);state.politics.kingSummoned=!!state.politics.kingSummoned;state.politics.executionOrdered=!!state.politics.executionOrdered;Object.keys(state.npc).forEach(id=>{state.npc[id]={...defaultState().npc[id],...state.npc[id],emotions:{...defaultState().npc[id].emotions,...(state.npc[id].emotions||{})}};});return !!state.started;}catch(e){return false;}
   }
   function addTimeline(text){state.timeline.unshift({day:state.day,time:timeLabel(),text});state.timeline=state.timeline.slice(0,12);save();}
   function addEvent(text){state.events.unshift(text);state.events=state.events.slice(0,5);save();}
@@ -72,6 +72,7 @@
       if(hour===21)addEvent("The north gate is being closed for the night. Late travellers are asked to wait until morning.");
       if(hour===0&&day>oldDay){addEvent("Another cold dawn is not far away. The night watch changes at the gate.");addTimeline("Day "+day+" begins in Ashenford.");}
     }
+    if(state.day>oldDay)advanceRumours(oldDay,state.day);
   }
   function ps(id){return state.npc[id];}
   function remember(id,text){const p=ps(id);p.memories.unshift(text);p.memories=p.memories.slice(0,5);}
@@ -218,7 +219,9 @@
     return {name:"A Stranger in Ashenford",desc:"Explore the village, meet its inhabitants, and decide what manner of stranger you shall become.",progress:10,meta:"CHAPTER I · THE STRANGER"};
   }
   function renderEvents(){
-    $("#world-events").innerHTML=state.events.slice(0,4).map((e,i)=>`<div class="event-item"><span class="event-time">${i===0?"NOW":"EARLIER"}</span><span class="event-copy">${escapeHtml(e)}</span></div>`).join("");
+    const whispers=state.politics.rumours.filter(r=>!r.refuted&&r.spread>0).slice(-2).reverse().map(r=>`<div class="event-item rumour-event"><span class="event-time">WHISPER</span><span class="event-copy"><strong>${escapeHtml(r.source)}:</strong> “${escapeHtml(r.text)}” <small>· Unverified</small></span></div>`).join("");
+    const summons=state.politics.kingSummoned?`<div class="event-item royal-summons-event"><span class="event-time">ROYAL</span><span class="event-copy">A sealed summons orders you to appear before King Aldric. The charge carries a sentence of death.</span></div>`:"";
+    $("#world-events").innerHTML=summons+whispers+state.events.slice(0,Math.max(0,4-(whispers?1:0)-(summons?1:0))).map((e,i)=>`<div class="event-item"><span class="event-time">${i===0?"NOW":"EARLIER"}</span><span class="event-copy">${escapeHtml(e)}</span></div>`).join("");
     $("#timeline-list").innerHTML=state.timeline.slice(0,4).map(e=>`<div class="timeline-entry"><span class="timeline-pin"></span><span class="timeline-copy"><strong>Day ${roman(e.day)} · ${e.time}</strong>${escapeHtml(e.text)}</span></div>`).join("")||'<span class="speech-hint">Your chronicle awaits its first entry.</span>';
   }
 function renderGuide(){
@@ -287,16 +290,29 @@ function renderGuide(){
     $("#conversation-options").innerHTML=optionsFor(activePerson).map((o,i)=>`<button class="choice-button" data-choice="${i}">${escapeHtml(o.label)}</button>`).join("");
     $$("[data-choice]").forEach(b=>b.addEventListener("click",()=>respondChoice(Number(b.dataset.choice))));
   }
+  function leverageFor(id){
+    if(state.politics.blackmailed.includes(id))return null;
+    if(id==="anselm"&&(state.quests.bell>=3||state.flags.sawFibres))return {secret:"You know he used the hidden handbell to guide supplies after the abbey bell was silenced.",rumour:"The traveller threatened a brother of the abbey and tried to use a private mistake for personal gain.",success:"Anselm reluctantly confirms that the hidden bell was used to guide food to the isolated cottages. He gives you a short written statement, though he warns that he will not forget the threat.",failure:"Anselm refuses. He says he will tell the prior that you threatened him."};
+    if(id==="margaret"&&hasPoliticalEvidence("market-ledger"))return {secret:"You know she kept a private tally that could bring questions from the levy collector.",rumour:"The traveller bullied a market woman and tried to force her into supporting a petition.",success:"Margaret reluctantly lends you a copy of the private tally. She says it is a business record, not a favour, and orders you never to threaten her again.",failure:"Margaret refuses and says she will tell the market what you tried to do."};
+    if(id==="rowan"&&hasPoliticalEvidence("tavern-witness"))return {secret:"You know the inn yard was used for late grain carts, putting Rowan's licence and reputation at risk.",rumour:"The traveller has been paying carters to invent stories about the royal storehouse.",success:"Rowan reluctantly gives you the carters' names and dates. He warns that he will deny any further involvement if you threaten him again.",failure:"Rowan refuses to be bullied in his own inn. By supper, the regulars will have heard his version."};
+    if(id==="hobb"&&hasPoliticalEvidence("gate-register"))return {secret:"You know his own gate register contains entries that do not match the storehouse records.",rumour:"The traveller tried to bribe a royal officer and threatened the gate watch when refused.",success:"Hobb grudgingly copies the disputed entries for you, but records that the copy was demanded under pressure.",failure:"Hobb refuses and reports your threat to the steward."};
+    if(id==="alwyn"&&hasPoliticalEvidence("royal-audit"))return {secret:"You have the second ledger that shows his diversion of relief grain and alteration of the public tally.",rumour:"The traveller stole grain from the royal stores and fabricated charges against the steward.",success:"Alwyn offers a signed statement naming the storehouse clerks who carried out his orders. The statement is marked as obtained under pressure.",failure:"Alwyn refuses to be cornered and tells the king you are trying to extort a royal officer."};
+    return null;
+  }
   function optionsFor(id){
-    if(id==="anselm"&&state.quests.bell===3)return [{label:"I shall protect your secret.",action:"protect"},{label:"The village deserves the truth.",action:"expose"},{label:"Let the village hear the matter.",action:"hearing"}];
-    if(id==="edmund")return [{label:"Ask about the strange bell.",action:"bell"},{label:"Ask about the physician's ledger.",action:"ledger"},{label:"Ask about his patients.",action:"patients"},{label:"Speak of modern inventions.",action:"modern"}];
-    if(id==="margaret")return [{label:"Ask about the bell after dusk.",action:"bell"},{label:"Ask for work or trade.",action:"parcel"},{label:"Ask about the physician.",action:"edmund"},{label:"Speak of modern technology.",action:"modern"}];
-    if(id==="rowan")return [{label:"Ask what he heard after midnight.",action:"bell"},{label:"Deliver Margaret's parcel.",action:"parcel"},{label:"Ask about Will.",action:"will"},{label:"Ask for a room.",action:"room"}];
-    if(id==="mara")return [{label:"Ask about her missing cousin.",action:"will"},{label:"Tell her you found a clue.",action:"clue"},{label:"Ask about Serjeant Hobb.",action:"hobb"}];
-    if(id==="hobb")return [{label:"State your business.",action:"business"},{label:"Present the royal dispatch.",action:"dispatch"},{label:"Ask about the missing courier.",action:"will"}];
-    if(id==="alwyn")return [{label:"Present yourself to the steward.",action:"business"},{label:"Ask about the village stores.",action:"stores"}];
-    if(id==="aldric")return [{label:"Speak of the bell mystery.",action:"kingbell"},{label:"Ask about Ashenford's troubles.",action:"troubles"}];
-    return [{label:"Ask about the plague.",action:"plague"},{label:"Ask about this village.",action:"village"},{label:"Ask about the bell.",action:"bell"},{label:"Speak of modern inventions.",action:"modern"}];
+    let options=[];
+    if(id==="anselm"&&state.quests.bell===3)options=[{label:"I shall protect your secret.",action:"protect"},{label:"The village deserves the truth.",action:"expose"},{label:"Let the village hear the matter.",action:"hearing"}];
+    else if(id==="edmund")options=[{label:"Ask about the strange bell.",action:"bell"},{label:"Ask about the physician's ledger.",action:"ledger"},{label:"Ask about his patients.",action:"patients"},{label:"Speak of modern inventions.",action:"modern"}];
+    else if(id==="margaret")options=[{label:"Ask about the bell after dusk.",action:"bell"},{label:"Ask for work or trade.",action:"parcel"},{label:"Ask about the physician.",action:"edmund"},{label:"Speak of modern technology.",action:"modern"}];
+    else if(id==="rowan")options=[{label:"Ask what he heard after midnight.",action:"bell"},{label:"Deliver Margaret's parcel.",action:"parcel"},{label:"Ask about Will.",action:"will"},{label:"Ask for a room.",action:"room"}];
+    else if(id==="mara")options=[{label:"Ask about her missing cousin.",action:"will"},{label:"Tell her you found a clue.",action:"clue"},{label:"Ask about Serjeant Hobb.",action:"hobb"}];
+    else if(id==="hobb")options=[{label:"State your business.",action:"business"},{label:"Present the royal dispatch.",action:"dispatch"},{label:"Ask about the missing courier.",action:"will"}];
+    else if(id==="alwyn")options=[{label:"Present yourself to the steward.",action:"business"},{label:"Ask about the village stores.",action:"stores"}];
+    else if(id==="aldric")options=[{label:"Speak of the bell mystery.",action:"kingbell"},{label:"Ask about Ashenford's troubles.",action:"troubles"}];
+    else options=[{label:"Ask about the plague.",action:"plague"},{label:"Ask about this village.",action:"village"},{label:"Ask about the bell.",action:"bell"},{label:"Speak of modern inventions.",action:"modern"}];
+    if(id==="aldric"&&state.politics.kingSummoned)options.unshift({label:"Answer the royal summons",action:"royal_appeal"});
+    if(leverageFor(id))options.push({label:"Use what you know as leverage",action:"blackmail"});
+    return options;
   }
   function normalizeNpcSpeech(value){
     return String(value||"")
@@ -321,6 +337,8 @@ function renderGuide(){
   }
   function respondChoice(index){
     if(!activePerson)return;const id=activePerson,p=people[id],opts=optionsFor(id),o=opts[index];if(!o)return;const action=o.action;say(o.label,"You");changeTime(5);
+    if(action==="blackmail"){useLeverage(id);renderDialogue();renderPeople();return;}
+    if(action==="royal_appeal"){resolveRoyalJudgement();renderDialogue();renderPeople();return;}
     if(action==="protect"||action==="expose"||action==="hearing"){say(action==="protect"?"Then I shall carry this burden with thee. The bell was mine, and I rang it to guide food to the cottages beyond the mill.":"Thou wouldst have the village know? I rang the handbell to guide provisions to families kept apart from the road. I meant no deception.","");completeBell(action);say(({protect:"Thou hast shown mercy. I shall remember it, traveller.",expose:"So the truth is out. May the village judge me fairly.",hearing:"Then let them hear it from my own lips. I am weary of hiding."})[action]);renderDialogue();return;}
     if(action==="bell"){
       if(id==="edmund"){say("The abbey swears its clapper was removed. Yet a bell rang after midnight. I heard it from the infirmary window.");adjust(id,{curiosity:8,concern:6});if(state.quests.bell===0){state.quests.bell=1;addTimeline("Edmund asked you to learn who rang the bell.");}}
@@ -379,6 +397,7 @@ function renderGuide(){
       "RIGHT NOW: "+context.activity+". The place is "+context.place+". It is "+context.dayPart+" at "+context.time+". Weather: "+context.weather+". Surroundings: "+context.localScene,
       "PLAYER: "+state.roleName+". Social position: "+(roles[state.role]?.station||state.roleName)+". Let their position affect relevant forms of address and expectations, but do not assume their gender, personality or ability.",
       "PUBLIC AFFAIRS: "+publicPoliticalClimate()+". Treat rumour as rumour. Do not know private evidence unless this character personally learned it.",
+      "RUMOURS HEARD LOCALLY: "+(state.politics.rumours.filter(r=>r.spread>0&&!r.refuted).slice(-3).map(r=>r.text).join(" | ")||"No current rumour about the player has reached this character.")+". These are unverified claims, not established facts.",
       "RELATIONSHIP: "+context.relationship+". They have met the player "+context.meetings+" time(s); "+context.daysSinceLastMeeting+" day(s) have passed since the previous meeting. Memories: "+memory,
       "QUEST CONTEXT: "+q.name+" — "+q.desc+". Current recorded facts: bell stage "+state.quests.bell+", ledger stage "+state.quests.ledger+", parcel stage "+state.quests.parcel+", missing courier stage "+state.quests.will+". Never invent a completed task, clue, promise or event.",
       "STYLE: Use clear, natural, spoken English that is easy to understand. The setting is medieval, but do not imitate Shakespeare. Do not use 'thou', 'thee', 'thy', fake archaic grammar or constant grand speeches. A little period-appropriate vocabulary is fine when natural.",
@@ -478,7 +497,112 @@ function renderGuide(){
     openModal("People of Ashenford",`<div class="journal-grid">${cards}</div>`,"THE SETTLEMENT");
   }
   function openInventory(){openModal("Your satchel",`<div class="inventory-grid">${state.inventory.map(i=>`<div class="inventory-item"><span>${i.icon}</span><strong>${escapeHtml(i.name)}</strong><small>${escapeHtml(i.desc)}</small></div>`).join("")||"<p>Your satchel is empty.</p>"}</div>`,"BELONGINGS & FINDS");}
-function politicsMetrics(){
+function addFalseRumour(sourceId){
+    const p=state.politics;
+    if(p.rumours.some(r=>r.sourceId===sourceId&&!r.refuted))return false;
+    const leverage=leverageFor(sourceId);if(!leverage)return false;
+    const rumorId="rumour-"+sourceId+"-"+state.day;
+    p.rumours.push({id:rumorId,sourceId,source:people[sourceId].name,text:leverage.rumour,false:true,spread:0,createdDay:state.day,lastSpreadDay:state.day,refuted:false});
+    p.royalSuspicion=clamp((p.royalSuspicion||0)+4);
+    addEvent("A damaging story about you is being whispered around Ashenford. Its source is said to be "+people[sourceId].name+".");
+    addTimeline("A rumour about you began circulating. It has not been proven.");
+    return true;
+  }
+  function useLeverage(id){
+    const detail=leverageFor(id),p=state.politics,saved=ps(id);
+    if(!detail||p.blackmailed.includes(id)){toast("You have no unused leverage over this person.");return;}
+    p.blackmailed.push(id);
+    const chance=Math.max(.15,Math.min(.72,.34+(saved.emotions.trust||0)/240-(saved.emotions.anger||0)/260));
+    const complied=Math.random()<chance;
+    adjust(id,{trust:-7,anger:9,fear:5});
+    remember(id,"You threatened to reveal a private weakness: "+detail.secret);
+    if(complied){
+      const notes={
+        anselm:["coerced-abbey-statement","Anselm's pressured statement","Anselm confirms the handbell was used to guide food to isolated cottages. He says the statement was given under threat."],
+        margaret:["coerced-market-copy","Margaret's pressured ledger copy","A copy of Margaret's private market tally. Its contents require independent checking because she surrendered it under pressure."],
+        rowan:["coerced-carter-list","Rowan's pressured carter list","Rowan names two carters who moved the late grain wagons. He disputes that he knowingly helped conceal missing supplies."],
+        hobb:["coerced-gate-copy","Hobb's pressured register copy","A copy of disputed gate entries, supplied under pressure and requiring comparison with the official register."],
+        alwyn:["coerced-steward-statement","Alwyn's pressured statement","Alwyn names clerks involved in the reserve movements, but the court will treat this statement as contested."]
+      }[id];
+      if(notes){addPoliticalEvidence(notes[0],notes[1],notes[2],people[id].name+" · obtained under pressure");const item=p.evidence.find(x=>x.id===notes[0]);if(item)item.coerced=true;}
+      say(detail.success);
+      addEvent(people[id].name+" has agreed to cooperate, but the agreement was made under pressure.");
+    }else{
+      say(detail.failure);
+      addEvent(people[id].name+" has refused a threat and is no longer willing to trust you.");
+    }
+    if(Math.random()<(complied?.78:1))addFalseRumour(id);
+    addEvent("Word is spreading that you have been using private information to pressure people.");
+    renderEvents();save();
+  }
+  function advanceRumours(oldDay,newDay){
+    const p=state.politics;
+    for(let day=oldDay+1;day<=newDay;day++){
+      p.rumours.forEach(r=>{
+        if(r.refuted||r.lastSpreadDay>=day)return;
+        r.spread=Math.min(4,(r.spread||0)+1);r.lastSpreadDay=day;
+        const increase=r.spread===1?10:r.spread===2?16:8;
+        p.royalSuspicion=clamp((p.royalSuspicion||0)+increase);
+        if(r.spread===1)addEvent("A rumour about you has reached the market and the tavern.");
+        else if(r.spread===2)addEvent("The same story is now being repeated near the keep and the North Gate.");
+      });
+      const wide=p.rumours.filter(r=>!r.refuted&&r.false&&r.spread>=2).length;
+      if(!p.kingSummoned&&!p.judgementComplete&&!p.executionOrdered&&!p.outcome&&wide>=3&&p.royalSuspicion>=72){
+        p.kingSummoned=true;p.judgementDueDay=day+2;state.flags.keepUnlocked=true;
+        p.kingResponse="The king has received several accounts accusing you of intimidation and disloyal conduct. A royal summons requires you to appear within two days; the charges may carry a sentence of death.";
+        addEvent("A royal messenger has delivered a sealed summons. King Aldric demands your appearance within two days.");
+        addTimeline("The Crown summoned you to answer repeated accusations. The charge carries a possible death sentence.");
+      }
+      if(p.kingSummoned&&!p.judgementComplete&&!p.executionOrdered&&p.judgementDueDay>0&&day>p.judgementDueDay)issueRoyalSentence();
+    }
+  }
+  function canRefuteRumours(){
+    const p=state.politics,credible=p.evidence.filter(item=>!item.coerced).length;
+    return credible>=2&&p.signatures.length>=2;
+  }
+  function refuteRumour(index){
+    const p=state.politics,rumour=p.rumours[index];
+    if(!rumour||rumour.refuted){toast("That rumour has already been answered.");return;}
+    if(state.location!=="keep"||!activeAt("aldric")){toast("Take sworn evidence to King Aldric at the keep during an audience.");return;}
+    if(!canRefuteRumours()){toast("You need two independent records and two willing signatories to challenge the accusation.");return;}
+    rumour.refuted=true;rumour.refutedDay=state.day;p.royalSuspicion=clamp((p.royalSuspicion||0)-24);
+    addTimeline("You challenged a false rumour in the king's court with independent records and witnesses.");
+    addEvent("A royal clerk has marked one accusation against you as unproven.");
+    renderCouncil();renderEvents();save();
+  }
+  function issueRoyalSentence(){
+    const p=state.politics;if(p.executionOrdered)return;
+    p.kingSummoned=false;p.executionOrdered=true;p.judgementComplete=true;
+    state.chapter="The King's Sentence";state.reputation="Condemned by the Crown";
+    addEvent("The Crown has ordered the sentence to be carried out at dawn. Your chronicle is closed.");
+    addTimeline("The court rejected your defence and issued its final sentence. The chronicle ends without depicting the punishment.");
+    save();showRoyalSentence();
+  }
+  function showRoyalSentence(){
+    openModal("The King's Sentence",`<section class="sentence-ending"><div class="quest-kicker">THE ROYAL COURT · ASHENFORD</div><h3>The Crown has judged you</h3><p>The accusations were repeated before the court, and you could not provide enough independent evidence to answer them. King Aldric has ordered the sentence to be carried out at dawn.</p><p>The punishment takes place off-screen. This chronicle has ended.</p><button class="sentence-new-button" id="new-chronicle-after-sentence">Begin a new chronicle</button></section>`,"CHRONICLE ENDED");
+    $("#new-chronicle-after-sentence").addEventListener("click",resetAfterSentence);
+  }
+  function resolveRoyalJudgement(){
+    const p=state.politics,refuted=p.rumours.filter(r=>r.refuted).length;
+    if(!p.kingSummoned||state.location!=="keep"||!activeAt("aldric")){toast("The king's court is not receiving you at this hour.");return;}
+    if(refuted>=2&&canRefuteRumours()){
+      p.kingSummoned=false;p.judgementComplete=true;p.royalSuspicion=clamp(p.royalSuspicion-35);
+      p.kingResponse="The royal clerk accepts the independent records and the witnesses who challenged the accusations. The king withdraws the summons, though the village will remember the affair.";
+      addEvent("The court has dismissed the accusations as unproven. The king withdraws the execution summons.");
+      addTimeline("You were cleared at the royal hearing after presenting independent evidence and witnesses.");
+      adjust("aldric",{trust:2,curiosity:2});state.reputation="Cleared by the Crown";
+    }else{
+      p.kingResponse="The court finds too many accusations unanswered. The king refuses to withdraw the sentence.";
+      issueRoyalSentence();
+    }
+    save();render();
+  }
+  function resetAfterSentence(){
+    localStorage.removeItem(SAVE_KEY);state=defaultState();activePerson=null;activeTab="world";selectedRole="traveller";
+    closeModal();$("#start-overlay").classList.remove("hidden");$(".role-option").forEach(b=>b.classList.toggle("selected",b.dataset.role==="traveller"));
+    $("#begin-game").textContent="Enter Ashenford";$("#continue-game").classList.add("hidden");render();
+  }
+  function politicsMetrics(){
     const p=state.politics;
     const commonSupport=clamp(18+p.grievances.length*7+p.evidence.length*5+p.signatures.length*6+(p.assemblyCalled?8:0));
     const crownSupport=clamp(78-commonSupport*.58+(p.outcome==="reform"?8:0));
@@ -496,6 +620,8 @@ function politicsMetrics(){
   }
   function publicPoliticalClimate(){
     const p=state.politics;
+    if(p.executionOrdered)return "The royal sentence has been issued. The chronicle is closed.";
+    if(p.kingSummoned)return "The king has summoned you to answer several rumours. The charges may carry a sentence of death.";
     if(p.outcome==="abdication")return "The crown has passed to a temporary council by public agreement. People are watching whether it can govern fairly.";
     if(p.outcome==="regency")return "A temporary village council now shares authority with the crown. The settlement is waiting to see whether reform will last.";
     if(p.outcome==="reform")return "The steward has been removed pending judgment, and the storehouse accounts are being opened to public review.";
