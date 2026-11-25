@@ -221,7 +221,8 @@
   function renderEvents(){
     const whispers=state.politics.rumours.filter(r=>!r.refuted&&r.spread>0).slice(-2).reverse().map(r=>`<div class="event-item rumour-event"><span class="event-time">WHISPER</span><span class="event-copy"><strong>${escapeHtml(r.source)}:</strong> “${escapeHtml(r.text)}” <small>· Unverified</small></span></div>`).join("");
     const summons=state.politics.kingSummoned?`<div class="event-item royal-summons-event"><span class="event-time">ROYAL</span><span class="event-copy">A sealed summons orders you to appear before King Aldric. The charge carries a sentence of death.</span></div>`:"";
-    $("#world-events").innerHTML=summons+whispers+state.events.slice(0,Math.max(0,4-(whispers?1:0)-(summons?1:0))).map((e,i)=>`<div class="event-item"><span class="event-time">${i===0?"NOW":"EARLIER"}</span><span class="event-copy">${escapeHtml(e)}</span></div>`).join("");
+    const whisperCount=state.politics.rumours.filter(r=>!r.refuted&&r.spread>0).slice(-2).length;
+    $("#world-events").innerHTML=summons+whispers+state.events.slice(0,Math.max(0,4-whisperCount-(summons?1:0))).map((e,i)=>`<div class="event-item"><span class="event-time">${i===0?"NOW":"EARLIER"}</span><span class="event-copy">${escapeHtml(e)}</span></div>`).join("");
     $("#timeline-list").innerHTML=state.timeline.slice(0,4).map(e=>`<div class="timeline-entry"><span class="timeline-pin"></span><span class="timeline-copy"><strong>Day ${roman(e.day)} · ${e.time}</strong>${escapeHtml(e.text)}</span></div>`).join("")||'<span class="speech-hint">Your chronicle awaits its first entry.</span>';
   }
 function renderGuide(){
@@ -599,14 +600,15 @@ function addFalseRumour(sourceId,leverageDetail){
   }
   function resetAfterSentence(){
     localStorage.removeItem(SAVE_KEY);state=defaultState();activePerson=null;activeTab="world";selectedRole="traveller";
-    closeModal();$("#start-overlay").classList.remove("hidden");$(".role-option").forEach(b=>b.classList.toggle("selected",b.dataset.role==="traveller"));
+    if(activeRequestController)activeRequestController.abort();activeRequestController=null;pendingDialogueLine=null;$("#dialogue-overlay").classList.add("hidden");closeModal();$("#start-overlay").classList.remove("hidden");$(".role-option").forEach(b=>b.classList.toggle("selected",b.dataset.role==="traveller"));
     $("#begin-game").textContent="Enter Ashenford";$("#continue-game").classList.add("hidden");render();
   }
   function politicsMetrics(){
     const p=state.politics;
-    const commonSupport=clamp(18+p.grievances.length*7+p.evidence.length*5+p.signatures.length*6+(p.assemblyCalled?8:0));
+    const credibleEvidence=p.evidence.filter(item=>!item.coerced).length;
+    const commonSupport=clamp(18+p.grievances.length*7+credibleEvidence*5+p.signatures.length*6+(p.assemblyCalled?8:0));
     const crownSupport=clamp(78-commonSupport*.58+(p.outcome==="reform"?8:0));
-    const stewardInfluence=clamp(68-p.evidence.length*11-(p.inquiryOpened?12:0)-(p.stewardRemoved?45:0));
+    const stewardInfluence=clamp(68-credibleEvidence*11-(p.inquiryOpened?12:0)-(p.stewardRemoved?45:0));
     return {commonSupport,crownSupport,stewardInfluence};
   }
   function hasPoliticalEvidence(id){return state.politics.evidence.some(item=>item.id===id);}
@@ -644,7 +646,7 @@ function addFalseRumour(sourceId,leverageDetail){
       mara:p.grievances.length>=1,
       edmund:hasPoliticalEvidence("infirmary-rations")||state.quests.ledger===2,
       anselm:state.quests.bell===4&&ps(id).emotions.trust>=24,
-      hobb:p.inquiryOpened&&p.evidence.length>=3
+      hobb:p.inquiryOpened&&p.evidence.filter(item=>!item.coerced).length>=3
     }[id]||false;
     return ready?"Ask for their signature":"They need a clearer reason to risk signing";
   }
@@ -661,7 +663,7 @@ function addFalseRumour(sourceId,leverageDetail){
     const at=(id)=>state.location===routineFor(id).place&&activeAt(id);
     const action=(id,title,desc,ready,locked)=>`<button class="council-action" data-council-action="${id}" ${ready?"":"disabled"}><strong>${title}</strong><span>${desc}</span><small>${ready?"Available here":locked}</small></button>`;
     const evidenceCount=p.evidence.length,credibleEvidenceCount=p.evidence.filter(item=>!item.coerced).length,grievanceCount=p.grievances.length,signatureCount=p.signatures.length;
-    const petitionReady=grievanceCount>=2&&evidenceCount>=2&&signatureCount>=3;
+    const petitionReady=grievanceCount>=2&&credibleEvidenceCount>=2&&signatureCount>=3;
     const auditReady=p.inquiryOpened&&at("alwyn")&&!p.stewardRemoved&&!hasPoliticalEvidence("royal-audit");
     const kingReady=at("aldric");
     const finalReady=p.kingConfronted&&kingReady&&!p.outcome;
@@ -684,7 +686,7 @@ function addFalseRumour(sourceId,leverageDetail){
         <div class="council-action-grid">
           ${action("ask_steward","Question Steward Alwyn","Ask him to explain the shortages and the handling of village levies.",state.location==="keep"&&at("alwyn")&&!p.inquiryOpened&&!p.stewardQuestioned,p.stewardQuestioned?"You have already heard his answer":"The steward is at the keep during office hours")}
           ${action("call_assembly","Call a village assembly","Invite residents to meet peacefully and discuss council oversight of the crown.",state.location==="market"&&at("margaret")&&grievanceCount>=2&&signatureCount>=3&&!p.assemblyCalled,"Requires two grievances and three petition signatures")}
-          ${action("request_audience","Request an audience","Hobb can issue a pass once a credible petition reaches the gate.",state.location==="gate"&&at("hobb")&&grievanceCount>=2&&evidenceCount>=2&&signatureCount>=3&&!state.flags.keepUnlocked,"Bring two grievances, two pieces of testimony and three signatures to Hobb")}
+          ${action("request_audience","Request an audience","Hobb can issue a pass once a credible petition reaches the gate.",state.location==="gate"&&at("hobb")&&grievanceCount>=2&&credibleEvidenceCount>=2&&signatureCount>=3&&!state.flags.keepUnlocked,"Bring two grievances, two pieces of testimony and three signatures to Hobb")}
           ${action("present_petition","Present the petition to King Aldric","Ask the crown to open the storehouse accounts and hear the villagers.",state.location==="keep"&&kingReady&&petitionReady&&!p.inquiryOpened,"Bring three signatures, two grievances and two pieces of testimony to the keep")}
         </div>
       </section>
@@ -742,10 +744,10 @@ function addFalseRumour(sourceId,leverageDetail){
       p.assemblyCalled=true;
       p.kingResponse="A public meeting has been called at the Market Cross. Residents may speak for reform, council oversight or the continuation of the crown.";
       addEvent("The Common Petition has called a peaceful village assembly. Some residents are asking whether Ashenford should be governed by a council.");addTimeline("Residents gathered at the Market Cross to debate the crown's authority and the steward's accounts.");time(20);
-    }else if(action==="request_audience"&&state.location==="gate"&&activeAt("hobb")&&p.grievances.length>=2&&p.evidence.length>=2&&p.signatures.length>=3&&!state.flags.keepUnlocked){
+    }else if(action==="request_audience"&&state.location==="gate"&&activeAt("hobb")&&p.grievances.length>=2&&p.evidence.filter(item=>!item.coerced).length>=2&&p.signatures.length>=3&&!state.flags.keepUnlocked){
       state.flags.keepUnlocked=true;p.audiencePass=true;
       addEvent("Serjeant Hobb has issued a formal pass for a petition to be presented at the keep.");addTimeline("Hobb granted you an audience pass after reviewing the petition's supporting names and records.");time(6);toast("Hobb has granted you access to the keep.");
-    }else if(action==="present_petition"&&state.location==="keep"&&activeAt("aldric")&&p.grievances.length>=2&&p.evidence.length>=2&&p.signatures.length>=3&&!p.inquiryOpened){
+    }else if(action==="present_petition"&&state.location==="keep"&&activeAt("aldric")&&p.grievances.length>=2&&p.evidence.filter(item=>!item.coerced).length>=2&&p.signatures.length>=3&&!p.inquiryOpened){
       p.inquiryOpened=true;p.petitionStarted=true;p.kingResponse="Aldric has ordered the storehouse accounts examined. He warns that accusations against a royal officer must be supported by records.";
       remember("aldric","You presented a petition with testimony about the grain levies. He ordered an inquiry into the storehouse accounts.");
       addEvent("King Aldric has ordered a formal inquiry into the grain accounts.");addTimeline("The Common Petition was presented to King Aldric; a royal inquiry was ordered.");time(10);
