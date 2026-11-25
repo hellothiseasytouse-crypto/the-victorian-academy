@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#211d18" />
+  <meta name="description" content="The Victorian Academy — a medieval roleplaying world of characters, mysteries, quests and consequences." />
+  <title>The Victorian Academy — Ashenford</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <div class="brand-mark">✦</div>
+        <div>
+          <div class="brand-name">THE VICTORIAN ACADEMY</div>
+          <div class="brand-subtitle">A LIVING MEDIEVAL CHRONICLE</div>
+        </div>
+      </div>
+      <div class="topbar-center"><span class="live-dot"></span><span>ASHENFORD</span><span class="topbar-divider">·</span><span id="header-date">THE YEAR OF OUR LORD 1348</span></div>
+      <div class="topbar-actions">
+        <div class="save-indicator" id="save-indicator"><span class="save-dot"></span><span>Autosave ready</span></div>
+        <button class="icon-button" id="sound-toggle" title="Toggle ambient sound" aria-label="Toggle ambient sound">♫</button>
+        <button class="icon-button" id="settings-button" title="Settings" aria-label="Settings">⚙</button>
+      </div>
+    </header>
+    <section class="status-ribbon">
+      <div class="status-left">
+        <span class="status-chip"><span class="tiny-icon">◷</span><span id="clock-label">Day I · 09:15</span></span>
+        <span class="status-chip"><span class="tiny-icon">☁</span><span id="weather-label">Low mist</span></span>
+        <span class="status-chip"><span class="tiny-icon">♙</span><span id="role-label">A traveller</span></span>
+      </div>
+      <div class="status-right"><span class="status-muted">REPUTATION</span><span class="rep-value" id="rep-value">Unknown</span><span class="status-separator"></span><span class="status-muted">CHRONICLE</span><span id="chapter-label">Chapter I · The Stranger</span></div>
+    </section>
+    <div class="game-layout">
+      <aside class="left-rail">
+        <div class="rail-heading">YOUR CHRONICLE</div>
+        <button class="nav-item active" data-view="world"><span class="nav-icon">⌖</span><span>World</span><span class="nav-count">01</span></button>
+        <button class="nav-item" data-view="journal"><span class="nav-icon">▤</span><span>Journal</span><span class="nav-count" id="journal-count">0</span></button>
+        <button class="nav-item" data-view="people"><span class="nav-icon">♙</span><span>People</span><span class="nav-count" id="people-count">06</span></button>
+        <button class="nav-item" data-view="inventory"><span class="nav-icon">◇</span><span>Satchel</span><span class="nav-count" id="inventory-count">02</span></button>
+        <div class="rail-divider"></div>
+        <div class="rail-heading">YOUR STANDING</div>
+        <div class="standing-card"><div class="standing-seal">✧</div><div class="standing-copy"><strong id="standing-title">Unknown</strong><span id="standing-desc">No one knows your name.</span></div></div>
+        <div class="rail-bottom">
+          <div class="autosave-note"><span class="autosave-symbol">◉</span><span>Your chronicle is<br><strong>saved automatically</strong></span></div>
+          <button class="text-button" id="export-save">Export save file ↗</button>
+        </div>
+      </aside>
+      <main class="main-stage">
+        <div class="stage-heading"><div><div class="eyebrow" id="scene-eyebrow">THE SETTLEMENT OF ASHENFORD</div><h1 id="scene-title">The Market Cross</h1><p id="scene-description">A damp morning settles over the village. Traders raise their awnings beneath the watchful shadow of the abbey bell.</p></div><div class="scene-heading-actions"><button class="secondary-button" id="map-toggle">⌖ <span>Village map</span></button><button class="primary-button" id="wait-button">Pass an hour <span>›</span></button></div></div>
+        <section class="scene-card" id="scene-card" aria-label="Medieval village scene"><div class="scene-art" id="scene-art"></div><div class="scene-vignette"></div><div class="scene-caption"><span class="location-seal">✦</span><span id="scene-caption">THE MARKET CROSS · ASHENFORD</span><span class="caption-line"></span><span id="scene-weather">MIST ON THE COBBLES</span></div><div class="scene-hotspots" id="scene-hotspots"></div><div class="scene-art-note">ILLUSTRATED CHRONICLE · 1348</div></section>
+        <div class="lower-stage"><section class="place-panel parchment-panel"><div class="panel-title-row"><div><div class="eyebrow">THE SETTLEMENT</div><h2>Places of Ashenford</h2></div><span class="small-note">Choose where to go</span></div><div class="place-grid" id="place-grid"></div></section><section class="event-panel dark-panel"><div class="panel-title-row"><div><div class="eyebrow gold-eyebrow">WHISPERS & HAPPENINGS</div><h2>Word on the street</h2></div><span class="event-mark">✧</span></div><div id="world-events" class="world-events"></div></section></div>
+      </main>
+      <aside class="right-rail"><section class="rail-section inhabitants-section"><div class="rail-section-heading"><div><div class="eyebrow">WHO IS HERE</div><h2>Inhabitants</h2></div><span class="round-count" id="present-count">3</span></div><div id="inhabitants-list" class="inhabitants-list"></div><button class="wide-quiet-button" id="all-people-button">View all inhabitants <span>→</span></button></section><section class="rail-section quest-section"><div class="rail-section-heading"><div><div class="eyebrow">YOUR CURRENT THREAD</div><h2>Quest journal</h2></div><span class="quest-fleur">❧</span></div><div id="active-quest-card" class="active-quest-card"></div><button class="wide-quiet-button" id="journal-button">Open journal <span>→</span></button></section><section class="rail-section timeline-section"><div class="rail-section-heading"><div><div class="eyebrow">RECENT HISTORY</div><h2>Timeline</h2></div></div><div id="timeline-list" class="timeline-list"></div></section></aside>
+    </div>
+    <footer class="footer-bar"><span>✦ ASHENFORD IS A FICTIONAL SETTLEMENT · INSPIRED BY MEDIEVAL EUROPE</span><span id="footer-save">YOUR STORY IS KEPT ON THIS DEVICE</span><span>BUILD 0.1.0 · THE FIRST CHRONICLE</span></footer>
+  </div>
+  <div class="overlay start-overlay" id="start-overlay"><div class="start-backdrop"></div><div class="start-content"><div class="start-crest">✦</div><div class="start-kicker">A LIVING MEDIEVAL CHRONICLE</div><h1>THE VICTORIAN<br/><em>ACADEMY</em></h1><p class="start-subtitle">A stranger. A troubled village. A thousand untold stories.</p><div class="start-divider"><span></span>✧<span></span></div><div class="start-box"><div class="eyebrow">CHOOSE YOUR BEGINNING</div><p class="start-instruction">The year is 1348. The road has brought you to Ashenford. What place do you hold in this unfamiliar world?</p><div class="role-options" id="role-options"><button class="role-option selected" data-role="traveller"><span class="role-symbol">♧</span><strong>Wayfarer</strong><small>A stranger with no known allegiance.</small></button><button class="role-option" data-role="apprentice"><span class="role-symbol">⚕</span><strong>Healer's apprentice</strong><small>Some knowledge of herbs and remedies.</small></button><button class="role-option" data-role="merchant"><span class="role-symbol">⚖</span><strong>Merchant's kin</strong><small>You know the value of a promise.</small></button><button class="role-option" data-role="courier"><span class="role-symbol">✉</span><strong>Royal courier</strong><small>You bear a sealed letter and a duty.</small></button></div><button class="start-button" id="begin-game">Enter Ashenford <span>→</span></button><button class="continue-button hidden" id="continue-game">Continue your chronicle</button></div><div class="start-footnote">NO TWO JOURNEYS NEED BE THE SAME · AUTOSAVE ENABLED</div></div></div>
+  <div class="overlay dialogue-overlay hidden" id="dialogue-overlay"><div class="dialogue-window"><div class="dialogue-topline"><span>✦ AN ENCOUNTER IN ASHENFORD</span><button class="close-button" id="close-dialogue" aria-label="Close dialogue">×</button></div><div class="dialogue-body"><aside class="character-profile" id="character-profile"></aside><section class="conversation-area"><div class="conversation-header"><div><div class="eyebrow" id="dialogue-role">PHYSICIAN</div><h2 id="dialogue-name">Edmund Blackthorn</h2><p id="dialogue-status">He regards you with cautious interest.</p></div><span class="conversation-ornament">❧</span></div><div class="emotion-strip" id="emotion-strip"></div><div class="conversation-log" id="conversation-log" aria-live="polite"></div><div class="conversation-options" id="conversation-options"></div><form class="speech-form" id="speech-form"><input id="speech-input" autocomplete="off" placeholder="Speak to them…" maxlength="240"/><button type="submit" aria-label="Send">↗</button></form><div class="speech-hint">Speak naturally. Their answer depends on their character, knowledge and memory.</div></section></div></div></div>
+  <div class="overlay modal-overlay hidden" id="modal-overlay"><div class="modal-window"><div class="modal-heading"><div><div class="eyebrow" id="modal-eyebrow">YOUR CHRONICLE</div><h2 id="modal-title">Journal</h2></div><button class="close-button" id="close-modal">×</button></div><div class="modal-content" id="modal-content"></div></div></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="game.js"></script>
+</body>
+</html>
