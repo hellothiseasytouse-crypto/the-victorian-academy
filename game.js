@@ -72,7 +72,7 @@
       if(hour===21)addEvent("The north gate is being closed for the night. Late travellers are asked to wait until morning.");
       if(hour===0&&day>oldDay){addEvent("Another cold dawn is not far away. The night watch changes at the gate.");addTimeline("Day "+day+" begins in Ashenford.");}
     }
-    if(state.day>oldDay)advanceRumours(oldDay,state.day);
+    if(state.day>oldDay){advanceRumours(oldDay,state.day);advanceHousingAndAccusations(oldDay,state.day);}
   }
   function ps(id){return state.npc[id];}
   function remember(id,text){const p=ps(id);p.memories.unshift(text);p.memories=p.memories.slice(0,5);}
@@ -221,8 +221,9 @@
   function renderEvents(){
     const whispers=state.politics.rumours.filter(r=>!r.refuted&&r.spread>0).slice(-2).reverse().map(r=>`<div class="event-item rumour-event"><span class="event-time">WHISPER</span><span class="event-copy"><strong>${escapeHtml(r.source)}:</strong> “${escapeHtml(r.text)}” <small>· Unverified</small></span></div>`).join("");
     const summons=state.politics.kingSummoned?`<div class="event-item royal-summons-event"><span class="event-time">ROYAL</span><span class="event-copy">A sealed summons orders you to appear before King Aldric. The charge carries a sentence of death.</span></div>`:"";
+    const witchNotice=state.social.witchSummoned?`<div class="event-item royal-summons-event"><span class="event-time">ACCUSATION</span><span class="event-copy">The Crown requires you to answer a witchcraft accusation by Day ${roman(state.social.witchDeadline)}.</span></div>`:"";
     const whisperCount=state.politics.rumours.filter(r=>!r.refuted&&r.spread>0).slice(-2).length;
-    $("#world-events").innerHTML=summons+whispers+state.events.slice(0,Math.max(0,4-whisperCount-(summons?1:0))).map((e,i)=>`<div class="event-item"><span class="event-time">${i===0?"NOW":"EARLIER"}</span><span class="event-copy">${escapeHtml(e)}</span></div>`).join("");
+    $("#world-events").innerHTML=summons+witchNotice+whispers+state.events.slice(0,Math.max(0,4-whisperCount-(summons?1:0)-(witchNotice?1:0))).map((e,i)=>`<div class="event-item"><span class="event-time">${i===0?"NOW":"EARLIER"}</span><span class="event-copy">${escapeHtml(e)}</span></div>`).join("");
     $("#timeline-list").innerHTML=state.timeline.slice(0,4).map(e=>`<div class="timeline-entry"><span class="timeline-pin"></span><span class="timeline-copy"><strong>Day ${roman(e.day)} · ${e.time}</strong>${escapeHtml(e.text)}</span></div>`).join("")||'<span class="speech-hint">Your chronicle awaits its first entry.</span>';
   }
 function renderGuide(){
@@ -277,7 +278,7 @@ function renderGuide(){
     else if(previousMetDay>0&&state.day>previousMetDay+2)remember(id,"Several days passed before you met again.");
     $("#dialogue-role").textContent=(p.role+" · "+rankLabel(id)).toUpperCase();$("#dialogue-name").textContent=p.name;const regard=relationshipFor(id);$("#dialogue-status").textContent=regard.summary;$("#character-profile").innerHTML=`<div class="portrait-large">${p.icon}</div><div class="profile-name">${p.name}</div><div class="profile-role">${p.role}</div><p class="profile-lore">${p.lore}</p><div class="profile-connections"><strong>KNOWN CONNECTIONS</strong><span>${p.connections}</span></div><div class="npc-regard-card"><span class="npc-regard-kicker">THEIR REGARD</span><strong class="npc-regard-title">${regard.title}</strong><small class="npc-regard-copy">${regard.summary}</small></div>`;
     const log=state.dialogueLog[id]||[];
-    if(!log.length)log.push({who:p.name,text:normalizeNpcSpeech(p.greeting)});
+    if(!log.length){const opening=state.social.witchRumour&&!state.social.witchCleared?"People have been asking why you spend so long standing about. Some are using a dangerous word: witch. I do not know whether there is any truth in it.":p.greeting;log.push({who:p.name,text:normalizeNpcSpeech(opening)});}
     state.dialogueLog[id]=log;renderDialogue();$("#dialogue-overlay").classList.remove("hidden");renderPeople();save();
   }
   const emotionColors={fear:"#a84f45",concern:"#c79742",anger:"#c56d3c",trust:"#66835d",curiosity:"#6488a9"};
@@ -312,6 +313,7 @@ function renderGuide(){
     else if(id==="aldric")options=[{label:"Speak of the bell mystery.",action:"kingbell"},{label:"Ask about Ashenford's troubles.",action:"troubles"}];
     else options=[{label:"Ask about the plague.",action:"plague"},{label:"Ask about this village.",action:"village"},{label:"Ask about the bell.",action:"bell"},{label:"Speak of modern inventions.",action:"modern"}];
     if(id==="aldric"&&state.politics.kingSummoned)options.unshift({label:"Answer the royal summons",action:"royal_appeal"});
+    if(id==="aldric"&&state.social.witchSummoned)options.unshift({label:"Answer the witchcraft accusation",action:"witch_appeal"});
     if(leverageFor(id))options.push({label:"Blackmail them with what you know",action:"blackmail"});
     return options;
   }
@@ -349,6 +351,7 @@ function renderGuide(){
     if(!activePerson)return;const id=activePerson,p=people[id],opts=optionsFor(id),o=opts[index];if(!o)return;const action=o.action;say(o.label,"You");changeTime(5);
     if(action==="blackmail"){useLeverage(id);renderDialogue();renderPeople();return;}
     if(action==="royal_appeal"){resolveRoyalJudgement();renderDialogue();renderPeople();return;}
+    if(action==="witch_appeal"){resolveWitchAccusation();renderDialogue();renderPeople();return;}
     if(action==="protect"||action==="expose"||action==="hearing"){say(action==="protect"?"Then I shall carry this burden with thee. The bell was mine, and I rang it to guide food to the cottages beyond the mill.":"Thou wouldst have the village know? I rang the handbell to guide provisions to families kept apart from the road. I meant no deception.","");completeBell(action);say(({protect:"Thou hast shown mercy. I shall remember it, traveller.",expose:"So the truth is out. May the village judge me fairly.",hearing:"Then let them hear it from my own lips. I am weary of hiding."})[action]);renderDialogue();return;}
     if(action==="bell"){
       if(id==="edmund"){say("The abbey swears its clapper was removed. Yet a bell rang after midnight. I heard it from the infirmary window.");adjust(id,{curiosity:8,concern:6});if(state.quests.bell===1){state.quests.bell=2;addTimeline("Edmund confirmed that he heard the strange bell from the infirmary.");}}
@@ -492,6 +495,96 @@ function renderGuide(){
     $("#modal-title").textContent=title;$("#modal-eyebrow").textContent=eyebrow||"YOUR CHRONICLE";$("#modal-content").innerHTML=content;$("#modal-overlay").classList.remove("hidden");
   }
   function closeModal(){$("#modal-overlay").classList.add("hidden");}
+  const residences={
+    margaret:{name:"Margaret merchant house",place:"market",owner:"margaret",kind:"Private household",desc:"A narrow brick-and-timber house behind the market stalls."},
+    edmund:{name:"Physician rooms",place:"infirmary",owner:"edmund",kind:"Private quarters",desc:"A small set of rooms beside the infirmary, kept orderly and quiet."},
+    rowan:{name:"The Fox & Lantern",place:"tavern",owner:"rowan",kind:"Inn and lodging",desc:"A room above the common room can be rented; Rowan also has a private chamber."},
+    anselm:{name:"Abbey guest rooms",place:"abbey",owner:"anselm",kind:"Church property",desc:"The abbey has strict rules for guests and visitors."},
+    mara:{name:"Mara cottage",place:"gate",owner:"mara",kind:"Working household",desc:"A modest cottage near the northern road."},
+    hobb:{name:"Gatehouse quarters",place:"gate",owner:"hobb",kind:"Royal quarters",desc:"A guarded room within the gatehouse, kept for the watch."},
+    alwyn:{name:"Steward chambers",place:"keep",owner:"alwyn",kind:"Royal household",desc:"Rooms inside the keep, watched by household servants."},
+    aldric:{name:"Royal apartments",place:"keep",owner:"aldric",kind:"Royal residence",desc:"The king private apartments, guarded day and night."}
+  };
+  function peacefulStayAllowed(id){
+    const trust=ps(id).emotions.trust||0,fear=ps(id).emotions.fear||0;
+    if(id==="alwyn"||id==="aldric")return false;
+    const threshold=id==="anselm"?70:id==="hobb"?60:40;
+    return ps(id).met&&trust>=threshold&&fear<60;
+  }
+  function reportTrespass(id){
+    const h=state.housing;if(h.reported||!residences[id])return;
+    h.reported=true;h.reportOwner=id;h.fineDue=3;h.reports.push({owner:id,day:state.day,home:residences[id].name});
+    adjust(id,{trust:-10,anger:12,fear:5});state.reputation="Suspected Trespasser";
+    addEvent(residences[id].name+" has reported an unauthorised entry. Serjeant Hobb has been asked to investigate.");
+    addTimeline("A resident reported that you entered "+residences[id].name+" without permission.");save();
+  }
+  function shelterAction(action,id){
+    const h=state.housing;
+    if(action==="rent"){
+      if(state.location!=="tavern"){toast("Go to the Fox & Lantern to ask Rowan for a room.");return;}
+      if(state.coins<2){toast("You do not have the two pennies Rowan asks for.");return;}
+      state.coins-=2;h.home="rowan";h.guestOf="rowan";h.status="rented";h.guestUntilDay=state.day+3;
+      addEvent("Rowan has rented you a room above the Fox & Lantern for three nights.");addTimeline("You paid two pennies for a room at the Fox & Lantern.");changeTime(5);
+    }else if(action==="ask"){
+      if(!id||!residences[id])return;
+      if(state.location!==residences[id].place){toast("Travel to "+places[residences[id].place].name+" first.");return;}
+      if(!peacefulStayAllowed(id)){toast(people[id].name+" is not willing to offer you a place to stay.");return;}
+      h.home=id;h.guestOf=id;h.status="guest";h.guestUntilDay=state.day+7;h.reported=false;h.reportOwner="";h.fineDue=0;
+      addEvent(people[id].name+" has agreed to let you stay for a few nights. You have permission to be there.");addTimeline("You were welcomed as a guest in "+residences[id].name+".");changeTime(5);
+    }else if(action==="sneak"){
+      if(!id||!residences[id])return;
+      if(state.location!==residences[id].place){toast("You must be at "+places[residences[id].place].name+" before you can try to enter.");return;}
+      if(h.reported){toast("You already have an unresolved trespass report. Speak with Serjeant Hobb first.");return;}
+      const trust=ps(id).emotions.trust||0,fear=ps(id).emotions.fear||0;
+      const chance=Math.max(.12,Math.min(.78,.58+trust/300-fear/260-((id==="aldric"||id==="alwyn")?.28:0)));
+      if(Math.random()<chance){h.home=id;h.guestOf=id;h.status="uninvited";h.guestUntilDay=state.day+2;addEvent("You entered "+residences[id].name+" without permission. The household has not noticed yet.");addTimeline("You took shelter without the owner consent at "+residences[id].name+".");}
+      else reportTrespass(id);
+      changeTime(5);
+    }else if(action==="leave"){
+      h.home="";h.guestOf="";h.status="homeless";h.guestUntilDay=0;addEvent("You left your lodging and returned to the village streets.");addTimeline("You left your previous lodging.");
+    }else if(action==="resolve"){
+      if(state.location!=="gate"||!activeAt("hobb")){toast("Find Serjeant Hobb at the North Gate to answer the report.");return;}
+      if(state.coins>=h.fineDue&&h.fineDue>0){state.coins-=h.fineDue;addEvent("You paid the trespass fine. Hobb has closed the report, though the household remembers what happened.");}
+      else{changeTime(180);adjust("hobb",{trust:-5,anger:8});state.reputation="Warned by the Watch";addEvent("Hobb has ordered you to leave the household alone and restricted your access until the next morning.");}
+      h.reported=false;h.reportOwner="";h.fineDue=0;h.status="homeless";h.home="";h.guestOf="";addTimeline("You answered the household complaint before Serjeant Hobb.");
+    }
+    save();render();if(!$("#modal-overlay").classList.contains("hidden"))openShelter();
+  }
+  function openShelter(){
+    const h=state.housing,occupied=h.home?residences[h.home]:null;
+    const homes=Object.entries(residences).map(([id,home])=>{
+      const owner=people[id],here=state.location===home.place,canStay=peacefulStayAllowed(id),current=h.home===id;
+      const access=(id==="alwyn"||id==="aldric")?"The royal household will not accept ordinary guests.":canStay?"They may accept you as a guest.":"You need to know them better before asking.";
+      return "<article class=\"shelter-card "+(current?"shelter-current":"")+"\"><div class=\"shelter-card-head\"><span class=\"shelter-symbol\">"+owner.icon+"</span><div><strong>"+escapeHtml(home.name)+"</strong><small>"+escapeHtml(home.kind)+" · "+escapeHtml(rankLabel(id))+"</small></div></div><p>"+escapeHtml(home.desc)+"</p><small class=\"shelter-owner\">Owner: "+escapeHtml(owner.name)+" · "+(here?"You are here":"Travel to "+places[home.place].short)+"</small><div class=\"shelter-actions\"><button data-shelter=\"ask\" data-owner=\""+id+"\" "+(!here||!canStay||current?"disabled":"")+">Ask to stay</button><button data-shelter=\"sneak\" data-owner=\""+id+"\" "+(!here||current||h.reported?"disabled":"")+">Try to enter quietly</button></div><small class=\"shelter-note\">"+(current?"Your current lodging":escapeHtml(access))+"</small></article>";
+    }).join("");
+    const status=h.status==="rented"?"Rented room":h.status==="guest"?"Welcomed guest":h.status==="uninvited"?"Uninvited occupant":"No current lodging";
+    const report=h.reported?"<section class=\"shelter-report\"><strong>HOUSEHOLD COMPLAINT</strong><p>"+escapeHtml(people[h.reportOwner]?.name||"A resident")+" has reported your unauthorised entry. Fine due: "+h.fineDue+" pennies. Find Hobb at the North Gate to answer the complaint.</p><button data-shelter=\"resolve\">Answer the complaint</button></section>":"";
+    openModal("Shelter & households","<section class=\"shelter-intro\"><div><span>YOUR LODGING</span><strong>"+status+"</strong><p>"+(occupied?escapeHtml(occupied.name):"You have no fixed address in Ashenford.")+"</p><small>Coin purse: "+state.coins+" pennies</small></div><div class=\"shelter-intro-actions\"><button data-shelter=\"rent\" "+(state.location!=="tavern"||state.coins<2?"disabled":"")+">Rent a room · 2 pennies</button>"+(occupied?"<button data-shelter=\"leave\">Leave lodging</button>":"")+"</div></section>"+report+"<p class=\"shelter-explainer\">A peaceful stay requires the owner trust and permission. Entering without permission may work briefly, but a resident can report you to the watch. Repeated trouble damages your standing.</p><div class=\"shelter-grid\">"+homes+"</div>","HOUSES, GUESTS & LODGING");
+    $("[data-shelter]").forEach(button=>button.addEventListener("click",()=>shelterAction(button.dataset.shelter,button.dataset.owner||"")));
+  }
+  function passHour(){
+    const social=state.social,absolute=(state.day-1)*1440+state.minute;
+    social.waitStreak=social.lastWaitAbsolute===absolute-60?social.waitStreak+1:1;social.lastWaitAbsolute=absolute;
+    changeTime(60);
+    if(social.waitStreak===2){addEvent("Several villagers have noticed you lingering for hours. Margaret asks whether you are waiting for someone.");Object.keys(people).forEach(id=>adjust(id,{curiosity:1}));}
+    if(social.waitStreak>=3&&!social.witchRumour){social.witchRumour=true;addEvent("A fearful whisper begins in the square: some villagers call your unexplained watching witchcraft. It is an accusation, not proof.");addTimeline("Villagers began questioning your repeated hours of waiting and spread a rumour of witchcraft.");Object.keys(people).forEach(id=>adjust(id,{fear:3,curiosity:2}));}
+    if(social.waitStreak>=4&&!social.witchReported){social.witchReported=true;state.politics.royalSuspicion=clamp(state.politics.royalSuspicion+18);addEvent("Serjeant Hobb has recorded the accusation and sent a report to the keep. The guards may question you.");addTimeline("The watch reported the witchcraft accusation to the royal household.");}
+    if(social.waitStreak>=6&&!social.witchSummoned&&!social.witchCleared){social.witchSummoned=true;social.witchDeadline=state.day+2;state.flags.keepUnlocked=true;addEvent("A royal messenger orders you to answer the witchcraft accusation before King Aldric within two days.");addTimeline("The king summoned you to answer the villagers accusation.");}
+    if(state.housing.status==="uninvited"&&!state.housing.reported&&Math.random()<.22)reportTrespass(state.housing.guestOf);
+    render();save(true);
+  }
+  function resolveWitchAccusation(){
+    const social=state.social;if(!social.witchSummoned||state.location!=="keep"||!activeAt("aldric")){toast("King Aldric is not receiving you at this hour.");return;}
+    const witnesses=Object.keys(people).filter(id=>id!=="aldric"&&ps(id).met&&ps(id).emotions.trust>=40&&ps(id).emotions.fear<65);
+    if(witnesses.length>=2){social.witchSummoned=false;social.witchCleared=true;social.witchRumour=false;state.politics.royalSuspicion=clamp(state.politics.royalSuspicion-35);addEvent("Two residents have spoken for you. The king dismisses the accusation as unsupported, though some villagers remain suspicious.");addTimeline("You answered the witchcraft accusation with two credible witnesses and were cleared by the Crown.");state.reputation="Cleared by the Crown";adjust("aldric",{trust:2,curiosity:2});}
+    else{social.witchDeadline=Math.max(social.witchDeadline,state.day+1);say("I will not condemn you on whispers alone. Return with two residents willing to speak for you.");addEvent("The king has demanded two credible witnesses before dismissing the accusation.");}
+    save();render();
+  }
+  function advanceHousingAndAccusations(oldDay,newDay){
+    const social=state.social,h=state.housing;
+    if(social.witchSummoned&&!social.witchCleared&&social.witchDeadline>0&&newDay>social.witchDeadline){social.witchSummoned=false;social.witchOutcome="banished";state.chapter="Exiled from Ashenford";state.reputation="Banished by the Crown";addEvent("The Crown has banished you from Ashenford after you failed to answer the accusation. The chronicle records your exile.");addTimeline("You were banished from Ashenford after the royal summons went unanswered.");}
+    if(h.guestUntilDay&&newDay>h.guestUntilDay&&h.status!=="homeless"){h.status="homeless";h.home="";h.guestOf="";h.guestUntilDay=0;addEvent("Your agreed lodging period has ended. You must leave or ask the household again.");}
+  }
   function openJournal(){
     const entries=[
       {name:"The Bell at Dusk",desc:"Investigate the strange ringing heard after midnight. Compare the accounts of Edmund, Rowan, and Margaret before visiting the abbey tower.",status:state.quests.bell===4?"Resolved":state.quests.bell>0?"In progress":"Undiscovered",objective:state.quests.bell===4?"Resolved: "+state.flags.ending:state.quests.bell===3?"Examine the tower and speak with Anselm.":"Speak with the physician and the villagers."},
@@ -638,6 +731,7 @@ function addFalseRumour(sourceId,leverageDetail){
     const p=state.politics;
     if(p.executionOrdered)return "The royal sentence has been issued. The chronicle is closed.";
     if(p.kingSummoned)return "The king has summoned you to answer several rumours. The charges may carry a sentence of death.";
+    if(state.social.witchSummoned)return "The Crown has called you to answer a witchcraft accusation. Two credible witnesses can clear your name.";
     if(p.outcome==="abdication")return "The crown has passed to a temporary council by public agreement. People are watching whether it can govern fairly.";
     if(p.outcome==="regency")return "A temporary village council now shares authority with the crown. The settlement is waiting to see whether reform will last.";
     if(p.outcome==="reform")return "The steward has been removed pending judgment, and the storehouse accounts are being opened to public review.";
@@ -850,14 +944,14 @@ function openMap(){
   }
   function resume(){if(load()){$("#start-overlay").classList.add("hidden");render();toast("Your chronicle has been restored.");}else begin();}
   function wire(){
-    $$(".nav-item").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.view;activeTab=v;$$(".nav-item").forEach(n=>n.classList.toggle("active",n===b));if(v==="world")toast("You are exploring Ashenford.");if(v==="council")openCouncil();if(v==="journal")openJournal();if(v==="people")openPeople();if(v==="inventory")openInventory();}));
+    $$(".nav-item").forEach(b=>b.addEventListener("click",()=>{const v=b.dataset.view;activeTab=v;$$(".nav-item").forEach(n=>n.classList.toggle("active",n===b));if(v==="world")toast("You are exploring Ashenford.");if(v==="council")openCouncil();if(v==="journal")openJournal();if(v==="people")openPeople();if(v==="shelter")openShelter();if(v==="inventory")openInventory();}));
     $("#modal-content").addEventListener("click",e=>{const refuteButton=e.target.closest("[data-rumour-refute]");if(refuteButton&&!refuteButton.disabled){refuteRumour(Number(refuteButton.dataset.rumourRefute));return;}const actionButton=e.target.closest("[data-council-action]");if(actionButton&&!actionButton.disabled){councilAction(actionButton.dataset.councilAction);return;}const signButton=e.target.closest("[data-council-sign]");if(signButton&&!signButton.disabled){const id=signButton.dataset.councilSign;if(signatureReason(id)==="Ask for their signature"){state.politics.signatures.push(id);remember(id,"You asked them to support the Common Petition; they agreed to add their name.");addTimeline(people[id].name+" signed the Common Petition.");addEvent(people[id].name+" has added a name to the petition.");changeTime(3);if(state.politics.signatures.length>=3&&!state.politics.petitionStarted){state.politics.petitionStarted=true;addEvent("The Common Petition is now being discussed openly in the village.");}save();render();renderCouncil();}}});
     $("#begin-game").addEventListener("click",begin);$("#continue-game").addEventListener("click",resume);
     $$(".role-option").forEach(b=>b.addEventListener("click",()=>{selectedRole=b.dataset.role;$$(".role-option").forEach(x=>x.classList.toggle("selected",x===b));}));
     $("#close-dialogue").addEventListener("click",closeDialogue);$("#dialogue-overlay").addEventListener("click",e=>{if(e.target===$("#dialogue-overlay"))closeDialogue();});
     $("#speech-form").addEventListener("submit",e=>{e.preventDefault();const input=$("#speech-input"),value=input.value;input.value="";handlePlayerSpeech(value);});
     $("#scene-hotspots").addEventListener("click",e=>{const b=e.target.closest("[data-action]");if(b)sceneAction(b.dataset.action);});
-    $("#map-toggle").addEventListener("click",openMap);$("#wait-button").addEventListener("click",()=>{changeTime(60);addTimeline("You let an hour pass in Ashenford.");addEvent("The day continues, indifferent to the worries of its people.");render();save(true);});
+    $("#map-toggle").addEventListener("click",openMap);$("#wait-button").addEventListener("click",passHour);
     $("#all-people-button").addEventListener("click",openPeople);$("#journal-button").addEventListener("click",openJournal);$("#close-modal").addEventListener("click",closeModal);$("#modal-overlay").addEventListener("click",e=>{if(e.target===$("#modal-overlay"))closeModal();});
     $("#settings-button").addEventListener("click",openSettings);$("#export-save").addEventListener("click",exportSave);$("#sound-toggle").addEventListener("click",()=>toast("Ambient sound is planned for a later chronicle."));
     document.addEventListener("keydown",e=>{if(e.key==="Escape"){if(!$("#dialogue-overlay").classList.contains("hidden"))closeDialogue();else if(!$("#modal-overlay").classList.contains("hidden"))closeModal();}});
