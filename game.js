@@ -311,7 +311,7 @@ function renderGuide(){
     else if(id==="aldric")options=[{label:"Speak of the bell mystery.",action:"kingbell"},{label:"Ask about Ashenford's troubles.",action:"troubles"}];
     else options=[{label:"Ask about the plague.",action:"plague"},{label:"Ask about this village.",action:"village"},{label:"Ask about the bell.",action:"bell"},{label:"Speak of modern inventions.",action:"modern"}];
     if(id==="aldric"&&state.politics.kingSummoned)options.unshift({label:"Answer the royal summons",action:"royal_appeal"});
-    if(leverageFor(id))options.push({label:"Use what you know as leverage",action:"blackmail"});
+    if(leverageFor(id))options.push({label:"Blackmail them with what you know",action:"blackmail"});
     return options;
   }
   function normalizeNpcSpeech(value){
@@ -531,8 +531,8 @@ function addFalseRumour(sourceId,leverageDetail){
       say(detail.failure);
       addEvent(people[id].name+" has refused a threat and is no longer willing to trust you.");
     }
-    if(Math.random()<(complied ? 0.78 : 1))addFalseRumour(id,detail);
-    addEvent("Word is spreading that you have been using private information to pressure people.");
+    const rumourStarted=Math.random()<(complied ? 0.78 : 1)?addFalseRumour(id,detail):false;
+    addEvent(rumourStarted?"Word is spreading that you have been using private information to pressure people.":"For now, the matter remains quiet. "+people[id].name+" has not spoken publicly, but the threat has damaged your standing.");
     renderEvents();save();
   }
   function advanceRumours(oldDay,newDay){
