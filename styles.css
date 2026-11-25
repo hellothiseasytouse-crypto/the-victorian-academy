@@ -86,3 +86,13 @@
 .npc-regard-meter span{display:block;height:100%;background:linear-gradient(90deg,#80603a,#d0af72);transition:width .25s ease}
 .npc-regard-copy{display:block;margin-top:7px;font:italic 10px/1.4 var(--book);color:#c8b895}
 @media(max-width:640px){.npc-regard-card{display:none}}
+
+/* Lived-in schedules and grounded field notes. */
+.inhabitant-copy small{display:block;max-width:155px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;line-height:1.4}
+.inhabitant-card{transition:background .16s ease,border-color .16s ease}
+.scene-description{max-width:760px;line-height:1.65}
+.npc-regard-card{padding:10px 10px 12px;border-top:1px solid #a88a59;border-bottom:1px solid #a88a59;background:linear-gradient(90deg,#ffffff08,transparent);color:#e8d9b9}
+.npc-regard-kicker{font-size:7px;letter-spacing:1.6px;color:#c4a36b}
+.npc-regard-title{font:600 15px var(--book);color:#f0e2c2}
+.npc-regard-copy{font:italic 10px/1.45 var(--book);color:#c8b895}
+@media(max-width:640px){.inhabitant-copy small{max-width:210px}.scene-description{line-height:1.55}}
