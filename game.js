@@ -34,7 +34,7 @@
     return {version:1,started:false,role:"traveller",roleName:"Wayfarer",location:"market",day:1,minute:555,chapter:"The Stranger",reputation:"Unknown",inventory:[{id:"travel-cloak",name:"Weatherworn cloak",icon:"🧥",desc:"A sturdy cloak, damp from the road."}],quests:{bell:0,ledger:-1,parcel:-1,will:-1},flags:{sawFibres:false,herbs:false,linen:false,willFound:false,keepUnlocked:false,ending:""},npc,events:["The market is waking beneath a veil of mist.","A bell was heard after midnight, though the abbey says its clapper is removed."],timeline:[],dialogueLog:{},lastSaved:0};
   }
   let state=defaultState(), selectedRole="traveller", activePerson=null, activeTab="world";
-  let toastTimer=null;
+  let toastTimer=null, activeRequestController=null, pendingDialogueLine=null;
   function timeLabel(){const h=Math.floor(state.minute/60)%24,m=state.minute%60;return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0");}
   function dateLabel(){return "Day "+state.day+" · "+timeLabel();}
   function roman(n){return ["I","II","III","IV","V","VI","VII","VIII","IX","X"][n-1]||String(n);}
@@ -157,7 +157,7 @@ function renderGuide(){
   function renderDialogue(){
     const s=ps(activePerson),p=people[activePerson],em=s.emotions;
     $("#emotion-strip").innerHTML=Object.entries(em).map(([k,v])=>`<div class="emotion-mini"><div class="emotion-mini-label"><span>${k[0].toUpperCase()+k.slice(1)}</span><span>${v}</span></div><div class="emotion-mini-track"><span style="width:${v}%;background:${emotionColors[k]}"></span></div></div>`).join("");
-    $("#conversation-log").innerHTML=(state.dialogueLog[activePerson]||[]).map(line=>`<div class="speech-line ${line.who==="You"?"player":""}"><span class="speech-speaker">${escapeHtml(line.who.toUpperCase())}</span><p>${escapeHtml(line.text)}</p></div>`).join("");$("#conversation-log").scrollTop=$("#conversation-log").scrollHeight;
+    $("#conversation-log").innerHTML=(state.dialogueLog[activePerson]||[]).map(line=>`<div class="speech-line ${line.who==="You"?"player":""} ${line.pending?"is-pending":""}"><span class="speech-speaker">${escapeHtml(line.pending?"THEY ARE THINKING":line.who.toUpperCase())}</span><p>${escapeHtml(line.text)}</p></div>`).join("");const conversationLog=$("#conversation-log");conversationLog.scrollTop=conversationLog.scrollHeight;
     $("#conversation-options").innerHTML=optionsFor(activePerson).map((o,i)=>`<button class="choice-button" data-choice="${i}">${escapeHtml(o.label)}</button>`).join("");
     $$("[data-choice]").forEach(b=>b.addEventListener("click",()=>respondChoice(Number(b.dataset.choice))));
   }
@@ -173,7 +173,7 @@ function renderGuide(){
     return [{label:"Ask about the plague.",action:"plague"},{label:"Ask about this village.",action:"village"},{label:"Ask about the bell.",action:"bell"},{label:"Speak of modern inventions.",action:"modern"}];
   }
   function say(text,who){const log=state.dialogueLog[activePerson]||[];log.push({who:who||people[activePerson].name,text});state.dialogueLog[activePerson]=log.slice(-18);renderDialogue();save();}
-  function closeDialogue(){$("#dialogue-overlay").classList.add("hidden");activePerson=null;render();}
+  function closeDialogue(){if(activeRequestController)activeRequestController.abort();activeRequestController=null;if(pendingDialogueLine&&activePerson){const log=state.dialogueLog[activePerson]||[];const i=log.indexOf(pendingDialogueLine);if(i>=0)log.splice(i,1);}pendingDialogueLine=null;const input=$("#speech-input"),send=$("#speech-form button");if(input)input.disabled=false;if(send)send.disabled=false;$("#dialogue-overlay").classList.add("hidden");activePerson=null;render();}
   function completeBell(outcome){
     state.quests.bell=4;state.flags.ending=outcome;state.chapter="The Bell at Dusk";state.reputation=outcome==="protect"?"A Keeper of Secrets":outcome==="expose"?"Truth-Teller":"Voice of the Village";state.flags.keepUnlocked=true;
     if(outcome==="protect"){adjust("anselm",{trust:35,fear:-25});adjust("edmund",{trust:8,concern:-5});addEvent("A quiet kindness has been shown to Brother Anselm.");}
@@ -227,54 +227,59 @@ function renderGuide(){
     return "Thou bringest strange wonders into my hall. Explain thy craft before I decide whether it is useful or forbidden.";
   }
 async function askNoxenStudio(text,personId){
-    const p=people[personId],saved=ps(personId);
-    const hint=$("#speech-hint");
-    if(hint)hint.textContent="NOXEN Studio is consulting this character's memories…";
-    const memory=saved.memories.slice(0,4).map(x=>"- "+x).join("\n")||"No personal memories yet.";
+    const p=people[personId],saved=ps(personId),hint=$("#speech-hint");
+    if(activeRequestController)activeRequestController.abort();
+    const controller=new AbortController();activeRequestController=controller;
+    pendingDialogueLine={who:p.name,text:"Listening to your words…",pending:true};
+    (state.dialogueLog[personId]||(state.dialogueLog[personId]=[])).push(pendingDialogueLine);
+    if(hint)hint.textContent="NOXEN Studio · composing a reply…";
+    const memory=saved.memories.slice(0,3).join("; ")||"No personal memories yet.",q=activeQuest();
     const prompt=[
-      "You are writing dialogue for a historically inspired medieval roleplaying game set in fictional Ashenford in 1348.",
-      "Stay completely in character as "+p.name+", a "+p.role+". Personality: "+p.lore+" Connections: "+p.connections,
-      "Voice: use readable medieval-leaning English, not random thee/thou in every sentence. Keep replies natural, vivid and concise (1–4 sentences).",
-      "Knowledge boundary: you know only medieval life and the facts below. Modern devices, internet, AI and slang are baffling or seem like witchcraft; react with believable confusion, suspicion or curiosity. Never suddenly understand modern technology.",
-      "Do not control the player, invent completed quests, claim to move the world, or contradict known facts. Do not give real medical advice. Disease and medicine are fictional story context.",
-      "Character's current emotional state (0–100): "+JSON.stringify(saved.emotions),
-      "What this character remembers:\n"+memory,
-      "Current place: "+places[state.location].name+". Day "+state.day+", "+timeLabel()+". Player background: "+state.roleName+". Current story thread: "+activeQuest().name+" — "+activeQuest().desc,
-      "Return ONLY valid JSON with keys: reply (string), emotion_delta (object with optional fear, concern, anger, trust, curiosity integers from -6 to 6), memory (short string or empty). Do not include markdown fences.",
-      "Player says: "+text.slice(0,240)
-    ].join("\n\n");
-    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),18000);
+      "Write the next in-character NPC line for a medieval roleplaying game set in fictional Ashenford, 1348.",
+      "Character: "+p.name+", "+p.role+". Personality: "+p.lore+" Connections: "+p.connections,
+      "Use natural, readable medieval-leaning English. Reply in 1–3 short sentences. Stay in character; do not narrate the player's actions.",
+      "Knowledge is limited to medieval life. Modern technology and slang are unfamiliar; react with believable confusion. Do not invent quest completion or contradict facts. No real-world medical advice.",
+      "Emotions: "+JSON.stringify(saved.emotions)+". Memories: "+memory,
+      "Place: "+places[state.location].name+". Time: Day "+state.day+" "+timeLabel()+". Player: "+state.roleName+". Quest: "+q.name+" — "+q.desc,
+      "Return ONLY JSON: {\"reply\":\"...\",\"emotion_delta\":{},\"memory\":\"\"}. emotion_delta may contain fear, concern, anger, trust, curiosity integers from -6 to 6.",
+      "Player says: "+text.slice(0,200)
+    ].join("\n");
+    const timeout=setTimeout(()=>controller.abort(),12000);
     try{
-      const response=await fetch("https://noxenlabs.vercel.app/api/chat",{
-        method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({message:prompt,selectedModel:"NOXEN Studio",agentMode:false,webSearch:false,attachments:[]}),
-        signal:controller.signal
-      });
+      const response=await fetch("https://noxenlabs.vercel.app/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message:prompt,selectedModel:"NOXEN Studio",agentMode:false,webSearch:false,attachments:[]}),signal:controller.signal});
       const data=await response.json().catch(()=>({}));
       if(!response.ok||typeof data.answer!=="string"||!data.answer.trim())throw new Error(data.error||"NOXEN Studio is unavailable.");
-      let parsed=null;const raw=data.answer.trim().replace(/^\`\`\`(?:json)?\s*/i,"").replace(/\s*\`\`\`$/,"");
-      try{parsed=JSON.parse(raw);}catch{}
-      const reply=typeof parsed?.reply==="string"?parsed.reply.trim():data.answer.trim();
-      if(!reply)throw new Error("NOXEN returned an empty reply.");
+      let raw=data.answer.trim(),cut=raw.indexOf("**Images from the web**");if(cut>=0)raw=raw.slice(0,cut).trim();
+      raw=raw.replace(/^\`\`\`(?:json)?\s*/i,"").replace(/\s*\`\`\`$/,"").trim();
+      let parsed=null;try{parsed=JSON.parse(raw);}catch{
+        const first=raw.indexOf("{");if(first>=0){let depth=0,inString=false,escaped=false,last=-1;
+          for(let i=first;i<raw.length;i++){const ch=raw[i];if(inString){if(escaped)escaped=false;else if(ch==="\\")escaped=true;else if(ch==='"')inString=false;}else if(ch==='"')inString=true;else if(ch==="{")depth++;else if(ch==="}"&&--depth===0){last=i+1;break;}}
+          if(last>first){try{parsed=JSON.parse(raw.slice(first,last));}catch{}}
+        }
+      }
+      let reply=typeof parsed?.reply==="string"?parsed.reply.trim():"";
+      if(!reply&&!parsed)reply=raw.replace(/\[\[webimage:[\s\S]*?\]\]/g,"").replace(/\s*\*\*Images from the web\*\*[\s\S]*$/i,"").trim();
+      if(!reply)throw new Error("NOXEN returned no usable dialogue.");
       if(activePerson!==personId)return;
-      say(reply.slice(0,1100));
-      const delta=parsed?.emotion_delta&&typeof parsed.emotion_delta==="object"?parsed.emotion_delta:{};
-      const safeDelta={};["fear","concern","anger","trust","curiosity"].forEach(k=>{const n=Number(delta[k]);if(Number.isFinite(n))safeDelta[k]=Math.max(-6,Math.min(6,Math.round(n)));});
-      adjust(personId,safeDelta);
-      if(typeof parsed?.memory==="string"&&parsed.memory.trim())remember(personId,parsed.memory.trim().slice(0,140));
-      remember(personId,"You said: "+text.slice(0,90));
-      renderDialogue();render();save();
-      if(hint)hint.textContent="Speaking with NOXEN Studio · Character roleplay";
+      const log=state.dialogueLog[personId]||[],i=log.indexOf(pendingDialogueLine);if(i>=0)log.splice(i,1);pendingDialogueLine=null;
+      say(reply.slice(0,700));
+      const delta=parsed?.emotion_delta&&typeof parsed.emotion_delta==="object"?parsed.emotion_delta:{},safeDelta={};
+      ["fear","concern","anger","trust","curiosity"].forEach(k=>{const n=Number(delta[k]);if(Number.isFinite(n))safeDelta[k]=Math.max(-6,Math.min(6,Math.round(n)));});
+      adjust(personId,safeDelta);if(typeof parsed?.memory==="string"&&parsed.memory.trim())remember(personId,parsed.memory.trim().slice(0,140));
+      remember(personId,"You said: "+text.slice(0,90));renderDialogue();render();save();
+      if(hint)hint.textContent="NOXEN Studio · Character roleplay";
     }catch(error){
       if(activePerson!==personId)return;
-      if(hint)hint.textContent="NOXEN Studio unavailable · local dialogue used";
+      const log=state.dialogueLog[personId]||[],i=log.indexOf(pendingDialogueLine);if(i>=0)log.splice(i,1);pendingDialogueLine=null;
+      if(hint)hint.textContent="Local character reply · NOXEN Studio unavailable";
       reactToFreeText(text,true);
-    }finally{clearTimeout(timeout);}
+    }finally{clearTimeout(timeout);if(activeRequestController===controller)activeRequestController=null;}
   }
   function handlePlayerSpeech(text){
-    const value=String(text||"").trim();if(!value||!activePerson||value.length>240)return;
+    const value=String(text||"").trim();if(!value||!activePerson||value.length>240||activeRequestController)return;
     const personId=activePerson;say(value,"You");changeTime(3);save();
-    askNoxenStudio(value,personId);
+    const input=$("#speech-input"),send=$("#speech-form button");if(input)input.disabled=true;if(send)send.disabled=true;
+    askNoxenStudio(value,personId).finally(()=>{if(input)input.disabled=false;if(send)send.disabled=false;});
   }
     function reactToFreeText(text,alreadyLogged=false){
     const t=text.trim();if(!t||!activePerson)return;if(t.length>240)return;if(!alreadyLogged){say(t,"You");changeTime(3);}
